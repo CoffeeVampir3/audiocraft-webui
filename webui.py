@@ -14,9 +14,10 @@ def generate_music(description: str):
 iface = gr.Interface(
     fn=generate_music,
     inputs="text",
-    outputs=gr.outputs.Audio(type="file", label="Generated Music"),
+    outputs=gr.outputs.Audio(type="filepath", label="Generated Music"),
     title="Music Generator",
     description="Enter a description to generate a unique piece of music!",
+    allow_flagging=False,
 )
 
 iface.launch()
