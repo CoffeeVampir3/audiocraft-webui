@@ -28,6 +28,7 @@ def load_model(version):
     except Exception as e:
         print(f"Failed to load model due to error: {e}, you probably need to pick a smaller model.")
         torch.cuda.empty_cache()
+        torch.cuda.synchronize()
         return None
     return model
 
@@ -71,6 +72,7 @@ def predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef
         if MODEL is not None:
             del MODEL
             torch.cuda.empty_cache()
+            torch.cuda.synchronize()
         MODEL = load_model(model)
         if MODEL is None:
             return None
@@ -105,8 +107,10 @@ def predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef
     if unload:
         import gc
         del MODEL
-        torch.cuda.empty_cache()
+        MODEL = None
         gc.collect() 
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
     
     return sample_rate, output
 
