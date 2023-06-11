@@ -103,6 +103,11 @@
             align-items: center;
         }
 
+        @keyframes fadeIn {
+            0% {opacity: 0;}
+            100% {opacity: 1;}
+        }
+
         .audio-item {
             width:95%;
             max-width: 95%;
@@ -114,6 +119,7 @@
             border-radius: 5px;
             box-shadow: 0px 0px 5px var(--flamingo);
             justify-content: space-between;
+            animation: fadeIn 1.8s;
         }
 
         .audio-list::-webkit-scrollbar {
@@ -226,6 +232,19 @@
     
         .group > div {
             flex-basis: 50%;
+        }
+
+        @keyframes gradient {
+            0% {background-position: 0% 50%;}
+            50% {background-position: 100% 50%;}
+            100% {background-position: 0% 50%;}
+        }
+
+        .loading {
+            background: linear-gradient(-97deg, var(--chameleon), var(--puppy), var(--dinosaur), var(--jellyfish));
+            background-size: 400% 400%;
+            animation: gradient 2s ease infinite;
+            color: white; /* Change text color so it's readable on the gradient */
         }
     </style>
     
@@ -360,14 +379,15 @@
 
         // Set up an event listener for when the model select field changes
         $("#model").change(toggleMelodyField);
-    });
 
-    $(document).ready(function() {
         $('form').on('submit', function(event) {
             event.preventDefault();  // prevent the form from being submitted normally
 
             // serialize form data
             var formData = new FormData(this);
+            var submitButton = $('#submit');
+
+            submitButton.addClass('loading');  // add the loading class to the submit button
 
             $.ajax({
                 type: 'POST',
@@ -375,45 +395,34 @@
                 data: formData,
                 contentType: false,
                 processData: false,
-                success: function(response) {
-                    updateAudioList();
-                }
+            })
+            .done(function(response) {
+                console.log(response);
+                appendNewAudioFile(response);
+            })
+            .fail(function(jqXHR, textStatus, errorThrown) {
+                console.error('Error:', errorThrown);
+            })
+            .always(function() {
+                submitButton.removeClass('loading');  // remove the loading class from the submit button
             });
         });
     });
 
-    async function updateAudioList() {
+    async function loadInitialAudioList() {
         try {
             const response = await fetch('/api/audio-files');
             const audioFiles = await response.json();
             
             const audioListDiv = document.querySelector('.audio-list');
-            audioFiles.sort((a, b) => b.timestamp - a.timestamp);
+            audioFiles.sort((a, b) => a.timestamp - b.timestamp);
 
             // Clear the existing audio list
             audioListDiv.innerHTML = '<div class="audio-padding"></div>';
 
             // Create a new audio list
             for (const file of audioFiles) {
-                const audioItemDiv = document.createElement('div');
-                audioItemDiv.className = 'audio-item';
-
-                const audioItemTextDiv = document.createElement('div');
-                audioItemTextDiv.className = 'audio-item-text';
-                audioItemTextDiv.textContent = file.text;
-                audioItemDiv.appendChild(audioItemTextDiv);
-
-                const audio = document.createElement('audio');
-                audio.controls = true;
-
-                const source = document.createElement('source');
-                source.src = '/static/audio/' + file.audio_file;
-                source.type = 'audio/wav';
-
-                audio.appendChild(source);
-                audioItemDiv.appendChild(audio);
-
-                audioListDiv.appendChild(audioItemDiv);
+                appendNewAudioFile(file, audioListDiv, false);
             }
 
             // Add the padding div
@@ -426,8 +435,43 @@
         }
     }
 
+    function appendNewAudioFile(file, audioListDiv = null, prepend = true) {
+        if (!audioListDiv) {
+            audioListDiv = document.querySelector('.audio-list');
+        }
+
+        const audioItemDiv = document.createElement('div');
+        audioItemDiv.className = 'audio-item';
+
+        const audioItemTextDiv = document.createElement('div');
+        audioItemTextDiv.className = 'audio-item-text';
+        audioItemTextDiv.textContent = file.text;
+        audioItemDiv.appendChild(audioItemTextDiv);
+
+        const audio = document.createElement('audio');
+        audio.controls = true;
+
+        const source = document.createElement('source');
+        source.src = '/static/audio/' + file.audio_file;
+        source.type = 'audio/wav';
+
+        audio.appendChild(source);
+        audioItemDiv.appendChild(audio);
+
+        // Get the first audio-item in the list
+        const firstAudioItem = audioListDiv.querySelector('.audio-item');
+        
+        // If there's an audio item, insert the new one before it.
+        // Otherwise, just append the new audio item.
+        if (firstAudioItem) {
+            audioListDiv.insertBefore(audioItemDiv, firstAudioItem);
+        } else {
+            audioListDiv.appendChild(audioItemDiv);
+        }
+    }
+
     // Call the function when the page loads
-    updateAudioList();
+    loadInitialAudioList();
 
 </script>
 </html>

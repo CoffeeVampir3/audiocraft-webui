@@ -110,6 +110,7 @@ def get_audio_files():
 @app.route('/', methods=['GET', 'POST'])
 def home_and_submit():
     form = MusicForm(request.form)
+    output_filename = None  # Initialize output_filename here
 
     if request.method == 'POST' and form.validate():
         model = form.model.data
@@ -143,7 +144,14 @@ def home_and_submit():
     audio_files_dicts = [{'text': text, 'audio_file': audio_file, 'timestamp': timestamp} for text, audio_file, timestamp in audio_files]
     
     if request.method == 'POST':
-        return jsonify({'audio_files': audio_files_dicts})
+        # If the output_filename is not None, find the corresponding file in the audio_files list and return it
+        if output_filename is not None:
+            output_filename = os.path.basename(output_filename)
+            new_file = next((file for file in audio_files_dicts if file['audio_file'] == output_filename), None)
+            print(new_file)
+            return jsonify(new_file)
+        else:
+            return jsonify({'error': 'No new file generated.'})
     else:
         return render_template('form.html', form=form, audio_files=audio_files_dicts)
 
