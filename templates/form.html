@@ -4,10 +4,40 @@
     <title>Music Generator</title>
     <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
     <style>
+        /* Random Darker Color Palette */
+        :root {
+            --kangaroo: #b8a1a0;
+            --flamingo: #b59a9a;
+            --unicorn: #b87d9b;
+            --platypus: #9f82bd;
+            --raccoon: #b26c80;
+            --tortoise: #b37884;
+            --dinosaur: #ba8569;
+            --yak: #baa778;
+            --lizard: #82b37b;
+            --chameleon: #73b2a8;
+            --stingray: #6ca7b3;
+            --narwhal: #5ca0b2;
+            --dolphin: #6c8fb9;
+            --jellyfish: #8b96bf;
+            --cuttlefish: #9ba3b6;
+            --walrus: #9299a3;
+            --penguin: #7f8392;
+            --meerkat: #73767e;
+            --weasel: #626474;
+            --mongoose: #54565c;
+            --lemur: #464858;
+            --opossum: #353645;
+            --badger: #24242f;
+            --kitten: #15151d;
+            --puppy: #141417;
+            --hamster: #0d0d0f;
+        }
+    
         body {
             font-family: 'Roboto', sans-serif;
-            background-color: #101010;
-            color: #ffffff;
+            background-color: var(--kitten);
+            color: var(--cuttlefish);
             margin: 0;
             padding: 0;
             display: flex;
@@ -16,19 +46,75 @@
             height: 100vh;
         }
     
-        .container {
-            width: 80%;
-            max-width: 800px;
-            background-color: #202020;
-            padding: 3em;
-            border-radius: 1em;
-            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.7);
-            transition: all 0.3s ease;
+        select {
+            background-color: var(--opossum);
+            color: var(--cuttlefish);
         }
     
+        textarea {
+            background-color: var(--opossum);
+            color: var(--cuttlefish);
+        }
+    
+        .container {
+            width: 90%; 
+            background-color: var(--badger);
+            padding: 3em;
+            border-radius: 1em;
+            box-shadow: 0px 5px 15px var(--weasel);
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+        }
+    
+        form {
+            width: 100%; 
+        }
+    
+        #advanced-settings,
+        .audio-list {
+            box-sizing: border-box; 
+            padding: 1em;
+            border: 1px solid var(--border-color);
+            border-radius: 1em;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+            background-color: var(--ternary-background);
+        }
+    
+        #advanced-settings {
+            width: 60%;
+            flex: 1;
+            padding-top: 100px;
+        }
+    
+        .audio-list {
+            width: 50%;
+            max-height: 80vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .audio-padding {
+            height: 20px;  /* adjust the height as necessary */
+        }
+
+        .audio-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid var(--input-background);
+            border-radius: 5px;
+        }
+
+        .audio-item > div {
+            margin-right: 20px;
+        }
+
         .field {
             margin-bottom: 2em;
-            width: 45%;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -39,59 +125,90 @@
         .field label {
             display: block;
             margin-bottom: 0.5em;
-            color: #ffffff;
+            color: var(--light-text-color); 
             font-size: 1.2em;
             font-weight: 500;
         }
     
-        #advanced-settings {
-            margin-top: 1em;
-            padding: 1em;
-            background-color: #202020;
-            border-radius: 0.25em;
-            transition: all 0.3s ease;
-        }
-    
-        #advanced-settings .field {
-            margin-bottom: 1em;
-        }
-    
         .submit-container {
+            flex-grow: 1;
+            width: 100%;
+            border: 1px solid var(--lemur);
+            background-color: var(--badger);
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .input-wrapper {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid rgba(0,0,0,0.1); /* light border */
-            background-color: #202020; /* dark background */
-            border-radius: 10px; /* rounded corners */
-            padding: 10px; /* some padding */
-            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2); /* subtle shadow */
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .input-wrapper textarea {
+            resize: none; /* Disallow resizing of the textarea */
+            margin-bottom: 10px; /* Add some space between the textarea and submit button */
+        }
+
+        .input-wrapper input[type="submit"] {
+            align-self: flex-end; /* Align the submit button to the end of the flex container */
+            font-size: 1.2em; /* Increase the font size */
+            font-weight: bold; /* Make the text bold */
         }
 
         .submit-container input[type="text"] {
             flex-grow: 1;
             margin-right: 1em;
-            background-color: #303030; /* even darker background */
-            border: none; /* no border */
-            border-radius: 0.25em; /* slightly rounded corners */
-            color: #ffffff; /* white text */
-            padding: 0.5em; /* some padding */
+            background-color: var(--opossum);
+            border: none;
+            border-radius: 0.25em;
+            color: var(--cuttlefish);
+            padding: 0.5em;
             transition: all 0.3s ease;
         }
 
         .submit-container input[type="submit"] {
-            background-color: #707070; /* dark gray background */
-            color: #ffffff; /* white text */
-            border: none; /* no border */
-            padding: 0.5em 1em; /* some padding */
-            border-radius: 0.25em; /* slightly rounded corners */
+            background-color: var(--flamingo); /* Change the color of the button */
+            color: var(--kitten); /* Change the text color to white */
+            border: none;
+            padding: 0.25em 1.5em; /* Increase the padding */
+            border-radius: 0.25em;
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
+        /* Add a hover effect */
+        .submit-container input[type="submit"]:hover {
+            background-color: var(--platypus);
+        }
+
+        /* Add an active (clicked) effect */
+        .submit-container input[type="submit"]:active {
+            background-color: var(--unicorn);
+            transform: scale(0.95); /* The button slightly shrinks when clicked */
+        }
+    
         .group {
-            margin-bottom: 3em;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .slider-group {
+            padding-bottom: 50px;
+            padding-top: 50px;
+        }
+    
+        .field {
+            flex-basis: 100%;
+        }
+    
+        .group > div {
+            flex-basis: 50%;
         }
     </style>
+    
     
 </head>
 <body>
@@ -110,36 +227,61 @@
                     </div>
                 </div>
 
-                <div class="group">
-                    <div class="field">
-                        <label>{{ form.duration.label }}</label>
-                        <input type="range" id="duration" name="duration" min="1" max="30" value="{{ form.duration.data }}">
-                        <span id="duration-value">{{ form.duration.data }}</span>
+                <div class="group slider-group">
+                    <div>
+                        <div class="field">
+                            <label>{{ form.topk.label }}</label>
+                            <input type="range" id="topk" name="topk" min="0" max="1000" value="{{ form.topk.data }}">
+                            <span id="topk-value">{{ form.topk.data }}</span>
+                        </div>
+                        
+                        <div class="field">
+                            <label>{{ form.duration.label }}</label>
+                            <input type="range" id="duration" name="duration" min="1" max="30" value="{{ form.duration.data }}">
+                            <span id="duration-value">{{ form.duration.data }}</span>
+                        </div>
                     </div>
-                    <div class="field">
-                        <label>{{ form.topk.label }}</label>
-                        <input type="number" id="topk" name="topk" min="0" value="{{ form.topk.data }}">
+                    <div>
+                        <div class="field">
+                            <label>{{ form.topp.label }}</label>
+                            <input type="range" id="topp" name="topp" min="0" max="1" step="0.01" value="{{ form.topp.data }}">
+                            <span id="topp-value">{{ form.topp.data }}</span>
+                        </div>
+                        <div class="field">
+                            <label>{{ form.temperature.label }}</label>
+                            <input type="range" id="temperature" name="temperature" min="0" max="7" step="0.01" value="{{ form.temperature.data }}">
+                            <span id="temperature-value">{{ form.temperature.data }}</span>
+                        </div>
                     </div>
-                    <div class="field">
-                        <label>{{ form.topp.label }}</label>
-                        <input type="range" id="topp" name="topp" min="0" max="1" step="0.01" value="{{ form.topp.data }}">
-                        <span id="topp-value">{{ form.topp.data }}</span>
-                    </div>
-                    <div class="field">
-                        <label>{{ form.temperature.label }}</label>
-                        <input type="range" id="temperature" name="temperature" min="0" max="7" step="0.01" value="{{ form.temperature.data }}">
-                        <span id="temperature-value">{{ form.temperature.data }}</span>
-                    </div>
-                </div>
+                </div>                
 
                 <div class="group">
                     <div class="submit-container">
-                        {{ form.text }}
-                        {{ form.submit }}
+                        <div class="input-wrapper">
+                            <textarea id="text" name="text" rows="3" required=""></textarea>
+                            <input id="submit" name="submit" type="submit" value="Submit">
+                        </div>
                     </div>
                 </div>
+                
             </div>
         </form>
+
+        <div class="audio-list">
+            <div class="audio-padding"></div>  <!-- padding div -->
+            {% for text, audio_file in audio_files %}
+                <div class="audio-item">
+                    <div>
+                        {{ text }}
+                    </div>
+                    <audio controls>
+                        <source src="{{ url_for('static', filename='audio/' + audio_file) }}" type="audio/wav">
+                    </audio>
+                </div>
+            {% endfor %}
+            <div class="audio-padding"></div>  <!-- padding div -->
+        </div>        
+
     </div>
 </body>
 <script>
@@ -153,6 +295,9 @@
     const temperatureSlider = document.querySelector('#temperature');
     const temperatureOutput = document.querySelector('#temperature-value');
 
+    const topkSlider = document.querySelector('#topk');
+    const topkOutput = document.querySelector('#topk-value');
+
     // Update the output element whenever the slider value changes
     durationSlider.oninput = function() {
         durationOutput.textContent = this.value;
@@ -164,6 +309,10 @@
 
     temperatureSlider.oninput = function() {
         temperatureOutput.textContent = this.value;
+    }
+
+    topkSlider.oninput = function() {
+        topkOutput.textContent = this.value;
     }
 </script>
 </html>

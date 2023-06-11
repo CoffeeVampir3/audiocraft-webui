@@ -1,12 +1,17 @@
 from flask import Flask, render_template, request, send_file
-from wtforms import Form, StringField, FileField, RadioField, IntegerField, FloatField, SubmitField, SelectField
+from wtforms import Form, StringField, FileField, RadioField, IntegerField, FloatField, SubmitField, SelectField, TextAreaField
 from wtforms.validators import DataRequired, NumberRange
 from scipy.io import wavfile
 import numpy as np
 import io
+import os
 import torch
 from audiocraft.models import MusicGen
 import json
+import tempfile
+import uuid
+import re, hashlib
+from operator import itemgetter
 
 MODEL = None
 
@@ -29,6 +34,29 @@ def load_and_process_audio(melody, model):
         return melody, sr
     else:
         return None, None
+    
+
+def sanitize_filename(filename):
+    """
+    Takes a filename and returns a sanitized version safe for filesystem operations.
+    """
+    return re.sub(r'[^\w\d-]', '_', filename)
+
+def save_output(output, text):
+    """
+    Save output to a WAV file with the filename based on the input text.
+    If a file with the same name already exists, append a number in parentheses.
+    """
+    i = 1
+    base_filename = f"static/audio/{sanitize_filename(text)}.wav"
+    output_filename = base_filename
+    while os.path.exists(output_filename):
+        output_filename = f"{base_filename.rsplit('.', 1)[0]}({i}).wav"
+        i += 1
+
+    wavfile.write(output_filename, output[0], np.array(output[1], dtype=np.float32))
+    return output_filename
+
 
 def predict(model, text, melody, duration, topk, topp, temperature, cfg_coef):
     global MODEL
@@ -63,13 +91,13 @@ def predict(model, text, melody, duration, topk, topp, temperature, cfg_coef):
     return MODEL.sample_rate, output
 
 class MusicForm(Form):
-    text = StringField('Input Text', [DataRequired()])
-    melody = FileField('Melody Condition (optional)')
+    text = TextAreaField('Input Text', [DataRequired()])
+    melody = FileField('Optional Melody')
     model = SelectField('Model', choices=[('melody', 'melody'), ('medium', 'medium'), ('small', 'small'), ('large', 'large')], default='large')
     duration = IntegerField('Duration', default=10, validators=[NumberRange(min=1, max=30)])
     topk = IntegerField('Top-k', default=250)
     topp = FloatField('Top-p', default=0)
-    temperature = FloatField('Temperature', default=1.0)
+    temperature = FloatField('Temperature', default=3.0)
     cfg_coef = FloatField('Classifier Free Guidance', default=3.0)
     submit = SubmitField('Submit')
 
@@ -78,6 +106,11 @@ app = Flask(__name__)
 @app.route('/', methods=['GET', 'POST'])
 def home():
     form = MusicForm(request.form)
+
+    if not os.path.exists('static/audio'):
+        os.makedirs('static/audio')
+        
+    audio_files = [(f, f) for f in os.listdir('static/audio')]
     if request.method == 'POST' and form.validate():
         # Use the form data to call the predict function
         model = form.model.data
@@ -94,16 +127,20 @@ def home():
             melody_file = request.files['melody']
             melody = wavfile.read(melody_file)
 
-        # Call the predict function
         output = predict(model, text, melody, duration, topk, topp, temperature, cfg_coef)
 
-        # Convert the output to a WAV file and send it
-        output_wav = io.BytesIO()
-        wavfile.write(output_wav, output[0], np.array(output[1], dtype=np.float32))
-        output_wav.seek(0)
-        return send_file(output_wav, mimetype='audio/wav')
+        output_filename = save_output(output, form.text.data)
+        wavfile.write(output_filename, output[0], np.array(output[1], dtype=np.float32))
 
-    return render_template('form.html', form=form)
+        # Remove the 'static/audio/' prefix from the filename for display
+        display_filename = output_filename.rsplit('/', 1)[-1]
+        audio_files.append((display_filename, display_filename))
+        
+        audio_files.sort(key=itemgetter(2), reverse=True)
+
+    return render_template('form.html', form=form, audio_files=audio_files)
 
 if __name__ == '__main__':
+    if not os.path.exists('static/audio'):
+        os.makedirs('static/audio')
     app.run(debug=True)
