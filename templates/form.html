@@ -3,6 +3,7 @@
 <head>
     <title>Music Generator</title>
     <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <style>
         /* Random Darker Color Palette */
         :root {
@@ -232,18 +233,18 @@
 </head>
 <body>
     <div class="container">
-        <form method="POST" enctype="multipart/form-data">
+        <form id="form" method="POST" enctype="multipart/form-data">
             <div id="advanced-settings">
                 <div class="group">
-                    <div class="field">
+                    <div id="melody-field" class="field">
                         <label>{{ form.melody.label }}</label>
                         <input type="file" id="melody" name="melody" accept="audio/*">
                         <audio id="audio-preview" controls></audio>
                     </div>
                     <div class="field">
                         <label>{{ form.model.label }}</label>
-                        {{ form.model }}
-                    </div>
+                        {{ form.model(id="model") }}
+                    </div>                    
                 </div>
 
                 <div class="group slider-group">
@@ -340,6 +341,93 @@
             document.getElementById("submit").click();  // trigger the submit button click event
         }
     });
+
+    $(document).ready(function() {
+        // Function to hide/show melody field
+        function toggleMelodyField() {
+            let model = $("#model").val();  // Get the value of the model select field
+            if (model === "melody") {
+                // If the model is melody, show the melody field
+                $("#melody-field").show();
+            } else {
+                // Otherwise, hide the melody field
+                $("#melody-field").hide();
+            }
+        }
+
+        // Initial call to set the visibility correctly
+        toggleMelodyField();
+
+        // Set up an event listener for when the model select field changes
+        $("#model").change(toggleMelodyField);
+    });
+
+    $(document).ready(function() {
+        $('form').on('submit', function(event) {
+            event.preventDefault();  // prevent the form from being submitted normally
+
+            // serialize form data
+            var formData = new FormData(this);
+
+            $.ajax({
+                type: 'POST',
+                url: '/',  // the endpoint where the form data should be POSTed
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function(response) {
+                    updateAudioList();
+                }
+            });
+        });
+    });
+
+    async function updateAudioList() {
+        try {
+            const response = await fetch('/api/audio-files');
+            const audioFiles = await response.json();
+            
+            const audioListDiv = document.querySelector('.audio-list');
+            audioFiles.sort((a, b) => b.timestamp - a.timestamp);
+
+            // Clear the existing audio list
+            audioListDiv.innerHTML = '<div class="audio-padding"></div>';
+
+            // Create a new audio list
+            for (const file of audioFiles) {
+                const audioItemDiv = document.createElement('div');
+                audioItemDiv.className = 'audio-item';
+
+                const audioItemTextDiv = document.createElement('div');
+                audioItemTextDiv.className = 'audio-item-text';
+                audioItemTextDiv.textContent = file.text;
+                audioItemDiv.appendChild(audioItemTextDiv);
+
+                const audio = document.createElement('audio');
+                audio.controls = true;
+
+                const source = document.createElement('source');
+                source.src = '/static/audio/' + file.audio_file;
+                source.type = 'audio/wav';
+
+                audio.appendChild(source);
+                audioItemDiv.appendChild(audio);
+
+                audioListDiv.appendChild(audioItemDiv);
+            }
+
+            // Add the padding div
+            const audioPaddingDiv = document.createElement('div');
+            audioPaddingDiv.className = 'audio-padding';
+            audioListDiv.appendChild(audioPaddingDiv);
+
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // Call the function when the page loads
+    updateAudioList();
 
 </script>
 </html>
