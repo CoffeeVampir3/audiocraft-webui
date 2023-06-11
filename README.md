@@ -14,6 +14,8 @@ More than 30 seconds of audio generation by using segments. It's basically the b
 ## Run:
 `python webui.py`
 
+There's no need to download any external models, pick a model in the dropdown and when you hit run for the first time it will be automatically downloaded via audiocraft. If you want to use the melody mode, select the Melody model and a selector for your melody audio file will appear.
+
 ## Notes:
 Files are saved to the `statc/audio/` directory.
 
