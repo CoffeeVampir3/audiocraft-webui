@@ -12,3 +12,5 @@ Local webui for Facebook's Audiocraft model: <https://github.com/facebookresearc
 
 ## Notes:
 Files are saved to the `statc/audio/` directory.
+
+The currently active model stays loaded in memory by default, if you want it to be unloaded after each generation, launch with python webui.py --unload-after-gen
