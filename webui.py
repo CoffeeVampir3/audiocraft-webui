@@ -3,15 +3,12 @@ from wtforms import Form, TextAreaField, FileField, SelectField, IntegerField, F
 from wtforms.validators import DataRequired, NumberRange
 from scipy.io import wavfile
 import numpy as np
-import os
-import torch
+import os, re, json, sys
+import torch, torchaudio
 from audiocraft.models import MusicGen
-import re
 from operator import itemgetter
-import json
 import librosa
 import soundfile as sf
-import sys
 
 MODEL = None
 unload = False
@@ -64,8 +61,34 @@ def save_output(output, text):
     wavfile.write(output_filename, output[0], np.array(output[1], dtype=np.float32))
     return output_filename
 
+#From https://colab.research.google.com/drive/154CqogsdP-D_TfSF9S2z8-BY98GN_na4?usp=sharing#scrollTo=exKxNU_Z4i5I
+#Thank you DragonForged
+def extend_audio(model, prompt_waveform, prompt, prompt_sr, num_segments=5, overlap=2):
+    # Calculate the number of samples corresponding to the overlap
+    overlap_samples = int(overlap * prompt_sr)
 
-def predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef):
+    device = model.device
+    prompt_waveform = prompt_waveform.to(device)
+    
+    print(num_segments)
+    print(overlap)
+
+    for _ in range(num_segments):
+        # Grab the end of the waveform
+        end_waveform = prompt_waveform[...,-overlap_samples:]
+
+        # Process the trimmed waveform using the model
+        new_audio = model.generate_continuation(end_waveform, descriptions=[prompt], prompt_sample_rate=prompt_sr, progress=True)
+            
+        # Cut the seed audio off the newly generated audio
+        new_audio = new_audio[...,overlap_samples:]
+
+        prompt_waveform = torch.cat([prompt_waveform, new_audio], dim=2)
+
+    return prompt_waveform.detach().cpu().numpy()
+
+
+def predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef, segments, overlap):
     global MODEL
     topk = int(topk)
     if MODEL is None or MODEL.name != model:
@@ -76,7 +99,7 @@ def predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef
         MODEL = load_model(model)
         if MODEL is None:
             return None
-        return predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef)
+        return predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef, segments, overlap)
 
     #if duration > MODEL.lm.cfg.dataset.segment_duration:
     #    raise gr.Error("MusicGen currently supports durations of up to 30 seconds!")
@@ -101,10 +124,15 @@ def predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef
     else:
         output = MODEL.generate(descriptions=[text], progress=False)
 
-    output = output.detach().cpu().numpy()
     sample_rate = MODEL.sample_rate
     
+    if segments > 1:
+        output_tensors = extend_audio(MODEL, output, text, sample_rate, segments, overlap)
+    else:
+        output_tensors = output.detach().cpu().numpy()
+    
     if unload:
+        del output
         import gc
         del MODEL
         MODEL = None
@@ -112,7 +140,7 @@ def predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef
         torch.cuda.empty_cache()
         torch.cuda.synchronize()
     
-    return sample_rate, output
+    return sample_rate, output_tensors
 
 class MusicForm(Form):
     text = TextAreaField('Input Text', [DataRequired()])
@@ -121,8 +149,10 @@ class MusicForm(Form):
     duration = IntegerField('Duration', default=10, validators=[NumberRange(min=1, max=30)])
     topk = IntegerField('Top-k', default=250)
     topp = FloatField('Top-p', default=0)
-    temperature = FloatField('Temperature', default=3.0)
-    cfg_coef = FloatField('Classifier Free Guidance', default=3.0)
+    temperature = FloatField('Temperature', default=1.0)
+    cfg_coef = FloatField('Classifier Free Guidance', default=7.0)
+    segments = IntegerField('Segments', default=5, validators=[NumberRange(min=1, max=10)])
+    overlap = FloatField('Overlap', default=5.0) 
     submit = SubmitField('Submit')
 
 app = Flask(__name__)
@@ -146,6 +176,23 @@ def home_and_submit():
         topp = form.topp.data
         temperature = form.temperature.data
         cfg_coef = form.cfg_coef.data
+        segments = form.segments.data
+        overlap = form.overlap.data
+        
+        parameters = {
+            "model": model,
+            "text": text,
+            "duration": duration,
+            "topk": topk,
+            "topp": topp,
+            "temperature": temperature,
+            "cfg_coef": cfg_coef,
+            "segments": segments,
+            "overlap": overlap
+        }
+
+        for name, value in parameters.items():
+            print(f"{name}: {value}")
 
         melody = None
         sr = None
@@ -160,7 +207,7 @@ def home_and_submit():
                 else:
                     print(f"Unsupported file extension: {extension}")
 
-        output = predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef)
+        output = predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef, segments, overlap)
         if output is None:
             return None
         output_filename = save_output(output, form.text.data)
@@ -176,7 +223,6 @@ def home_and_submit():
         if output_filename is not None:
             output_filename = os.path.basename(output_filename)
             new_file = next((file for file in audio_files_dicts if file['audio_file'] == output_filename), None)
-            print(new_file)
             return jsonify(new_file)
         else:
             return jsonify({'error': 'No new file generated.'})
