@@ -35,6 +35,7 @@ def predict(model, text, melody, duration, topk, topp, temperature, cfg_coef):
     topk = int(topk)
     if MODEL is None or MODEL.name != model:
         MODEL = load_model(model)
+        return predict(model, text, melody, duration, topk, topp, temperature, cfg_coef)
 
     #if duration > MODEL.lm.cfg.dataset.segment_duration:
     #    raise gr.Error("MusicGen currently supports durations of up to 30 seconds!")

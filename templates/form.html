@@ -142,4 +142,28 @@
         </form>
     </div>
 </body>
+<script>
+    // Select sliders and corresponding output elements by id
+    const durationSlider = document.querySelector('#duration');
+    const durationOutput = document.querySelector('#duration-value');
+    
+    const toppSlider = document.querySelector('#topp');
+    const toppOutput = document.querySelector('#topp-value');
+    
+    const temperatureSlider = document.querySelector('#temperature');
+    const temperatureOutput = document.querySelector('#temperature-value');
+
+    // Update the output element whenever the slider value changes
+    durationSlider.oninput = function() {
+        durationOutput.textContent = this.value;
+    }
+
+    toppSlider.oninput = function() {
+        toppOutput.textContent = this.value;
+    }
+
+    temperatureSlider.oninput = function() {
+        temperatureOutput.textContent = this.value;
+    }
+</script>
 </html>
