@@ -86,18 +86,20 @@
             flex: 1;
             padding-top: 100px;
         }
-    
+
+        .audio-padding {
+            height: 20px;
+        }
+
         .audio-list {
             width: 50%;
-            max-height: 80vh;
+            max-height: 70vh;
+            height: 70vh;
             overflow-y: auto;
+            overflow-x: hidden;
             display: flex;
             flex-direction: column;
             align-items: center;
-        }
-
-        .audio-padding {
-            height: 20px;  /* adjust the height as necessary */
         }
 
         .audio-item {
@@ -105,12 +107,29 @@
             align-items: center;
             margin-bottom: 10px;
             padding: 10px;
-            border: 1px solid var(--input-background);
+            border: 1px solid var(--hamster);
             border-radius: 5px;
+            box-shadow: 0px 0px 5px var(--flamingo);
+            justify-content: flex-start;
         }
 
-        .audio-item > div {
-            margin-right: 20px;
+        .audio-list::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .audio-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .audio-list::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+        }
+
+        .audio-item-text {
+            max-width: 90%;
+            overflow-wrap: break-word;
+            text-align: left;
         }
 
         .field {
@@ -147,14 +166,14 @@
         }
 
         .input-wrapper textarea {
-            resize: none; /* Disallow resizing of the textarea */
-            margin-bottom: 10px; /* Add some space between the textarea and submit button */
+            resize: none;
+            margin-bottom: 10px;
         }
 
         .input-wrapper input[type="submit"] {
-            align-self: flex-end; /* Align the submit button to the end of the flex container */
-            font-size: 1.2em; /* Increase the font size */
-            font-weight: bold; /* Make the text bold */
+            align-self: flex-end;
+            font-size: 1.2em;
+            font-weight: bold;
         }
 
         .submit-container input[type="text"] {
@@ -169,24 +188,22 @@
         }
 
         .submit-container input[type="submit"] {
-            background-color: var(--flamingo); /* Change the color of the button */
-            color: var(--kitten); /* Change the text color to white */
+            background-color: var(--flamingo);
+            color: var(--kitten);
             border: none;
-            padding: 0.25em 1.5em; /* Increase the padding */
+            padding: 0.25em 1.5em; 
             border-radius: 0.25em;
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
-        /* Add a hover effect */
         .submit-container input[type="submit"]:hover {
             background-color: var(--platypus);
         }
 
-        /* Add an active (clicked) effect */
         .submit-container input[type="submit"]:active {
             background-color: var(--unicorn);
-            transform: scale(0.95); /* The button slightly shrinks when clicked */
+            transform: scale(0.95);
         }
     
         .group {
@@ -269,11 +286,11 @@
 
         <div class="audio-list">
             <div class="audio-padding"></div>  <!-- padding div -->
-            {% for text, audio_file in audio_files %}
+            {% for text, audio_file, _ in audio_files %}
                 <div class="audio-item">
-                    <div>
+                    <div class="audio-item-text">
                         {{ text }}
-                    </div>
+                    </div>                    
                     <audio controls>
                         <source src="{{ url_for('static', filename='audio/' + audio_file) }}" type="audio/wav">
                     </audio>
@@ -314,5 +331,13 @@
     topkSlider.oninput = function() {
         topkOutput.textContent = this.value;
     }
+
+    document.getElementById("text").addEventListener("keydown", function(e) {
+        if (e.keyCode === 13) {  // checks whether the pressed key is "Enter"
+            e.preventDefault();  // prevent the default action (i.e., inserting a new line)
+            document.getElementById("submit").click();  // trigger the submit button click event
+        }
+    });
+
 </script>
 </html>

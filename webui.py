@@ -1,16 +1,12 @@
-from flask import Flask, render_template, request, send_file
-from wtforms import Form, StringField, FileField, RadioField, IntegerField, FloatField, SubmitField, SelectField, TextAreaField
+from flask import Flask, render_template, request
+from wtforms import Form, TextAreaField, FileField, SelectField, IntegerField, FloatField, SubmitField
 from wtforms.validators import DataRequired, NumberRange
 from scipy.io import wavfile
 import numpy as np
-import io
 import os
 import torch
 from audiocraft.models import MusicGen
-import json
-import tempfile
-import uuid
-import re, hashlib
+import re
 from operator import itemgetter
 
 MODEL = None
@@ -40,7 +36,7 @@ def sanitize_filename(filename):
     """
     Takes a filename and returns a sanitized version safe for filesystem operations.
     """
-    return re.sub(r'[^\w\d-]', '_', filename)
+    return re.sub(r'[^\w\d-]', ' ', filename)
 
 def save_output(output, text):
     """
@@ -110,7 +106,9 @@ def home():
     if not os.path.exists('static/audio'):
         os.makedirs('static/audio')
         
-    audio_files = [(f, f) for f in os.listdir('static/audio')]
+    audio_files = [(f, f, os.path.getmtime(f'static/audio/{f}')) for f in os.listdir('static/audio')]
+    #audio_files.sort(key=itemgetter(2), reverse=True)  # sort by timestamp in descending order
+
     if request.method == 'POST' and form.validate():
         # Use the form data to call the predict function
         model = form.model.data
@@ -120,6 +118,16 @@ def home():
         topp = form.topp.data
         temperature = form.temperature.data
         cfg_coef = form.cfg_coef.data
+        
+        print(
+            f"model = {form.model.data}\n"
+            f"text = {form.text.data}\n"
+            f"duration = {form.duration.data}\n"
+            f"topk = {form.topk.data}\n"
+            f"topp = {form.topp.data}\n"
+            f"temperature = {form.temperature.data}\n"
+            f"cfg_coef = {form.cfg_coef.data}"
+        )
 
         # Load and process the audio file if one was uploaded
         melody = None
@@ -134,9 +142,9 @@ def home():
 
         # Remove the 'static/audio/' prefix from the filename for display
         display_filename = output_filename.rsplit('/', 1)[-1]
-        audio_files.append((display_filename, display_filename))
         
-        audio_files.sort(key=itemgetter(2), reverse=True)
+        audio_files.append((display_filename, display_filename, os.path.getmtime(output_filename)))
+        audio_files.sort(key=itemgetter(2), reverse=True)  # sort by timestamp in descending order
 
     return render_template('form.html', form=form, audio_files=audio_files)
 
