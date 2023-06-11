@@ -9,3 +9,6 @@ Quick webui for <https://github.com/facebookresearch/audiocraft>
 
 ## Run:
 `python webui.py`
+
+## Notes:
+Files are saved to the `statc/audio/` directory.
