@@ -8,6 +8,9 @@ import torch
 from audiocraft.models import MusicGen
 import re
 from operator import itemgetter
+import json
+import librosa
+import soundfile as sf
 
 MODEL = None
 
@@ -15,21 +18,15 @@ def load_model(version):
     print("Loading model", version)
     return MusicGen.get_pretrained(version)
 
-def load_and_process_audio(melody, model):
-    if melody is not None:
-        try:
-            sr, melody = melody[0], torch.from_numpy(melody[1]).to(model.device).float().t().unsqueeze(0)
-        except json.JSONDecodeError:
-            sr, melody = wavfile.read(melody)
-            melody = torch.from_numpy(melody).to(model.device).float().t().unsqueeze(0)
-
-        print(melody.shape)
+def load_and_process_audio(melody_data, sr, model):
+    if melody_data is not None:
+        melody = torch.from_numpy(melody_data).to(model.device).float().t().unsqueeze(0)
         if melody.dim() == 2:
             melody = melody[None]
         melody = melody[..., :int(sr * model.lm.cfg.dataset.segment_duration)]
-        return melody, sr
+        return melody
     else:
-        return None, None
+        return None
     
 
 def sanitize_filename(filename):
@@ -54,12 +51,12 @@ def save_output(output, text):
     return output_filename
 
 
-def predict(model, text, melody, duration, topk, topp, temperature, cfg_coef):
+def predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef):
     global MODEL
     topk = int(topk)
     if MODEL is None or MODEL.name != model:
         MODEL = load_model(model)
-        return predict(model, text, melody, duration, topk, topp, temperature, cfg_coef)
+        return predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef)
 
     #if duration > MODEL.lm.cfg.dataset.segment_duration:
     #    raise gr.Error("MusicGen currently supports durations of up to 30 seconds!")
@@ -72,7 +69,8 @@ def predict(model, text, melody, duration, topk, topp, temperature, cfg_coef):
         duration=duration,
     )
     
-    melody, sr = load_and_process_audio(melody, MODEL)
+    melody = load_and_process_audio(melody, sr, MODEL)
+
     if melody is not None:
         output = MODEL.generate_with_chroma(
             descriptions=[text],
@@ -85,6 +83,13 @@ def predict(model, text, melody, duration, topk, topp, temperature, cfg_coef):
 
     output = output.detach().cpu().numpy()
     return MODEL.sample_rate, output
+
+def mp3_to_wav(mp3_path, wav_path):
+    # Load the MP3 file with librosa
+    y, sr = librosa.load(mp3_path, sr=None)  # sr=None preserves the original sampling rate
+
+    # Save the data as a WAV file with soundfile
+    sf.write(wav_path, y, sr, format='wav')
 
 class MusicForm(Form):
     text = TextAreaField('Input Text', [DataRequired()])
@@ -129,16 +134,20 @@ def home():
             f"cfg_coef = {form.cfg_coef.data}"
         )
 
-        # Load and process the audio file if one was uploaded
         melody = None
+        sr = None
         if 'melody' in request.files and request.files['melody'].filename != '':
             melody_file = request.files['melody']
-            melody = wavfile.read(melody_file)
+            extension = os.path.splitext(melody_file.filename)[1]
+            if extension.lower() in ['.wav', '.mp3']:
+                melody, sr = librosa.load(melody_file, sr=None)  # librosa automatically handles both wav and mp3 files including different wav encodings
+            else:
+                print(f"Unsupported file extension: {extension}")
 
-        output = predict(model, text, melody, duration, topk, topp, temperature, cfg_coef)
+        output = predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef)
+
 
         output_filename = save_output(output, form.text.data)
-        wavfile.write(output_filename, output[0], np.array(output[1], dtype=np.float32))
 
         # Remove the 'static/audio/' prefix from the filename for display
         display_filename = output_filename.rsplit('/', 1)[-1]

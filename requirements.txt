@@ -4,3 +4,6 @@ scipy
 numpy
 torch
 audiocraft
+librosa
+soundfile
+audioread
