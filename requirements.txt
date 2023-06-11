@@ -1,0 +1,5 @@
+flask
+wtforms
+scipy
+numpy
+torch
