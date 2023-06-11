@@ -142,8 +142,6 @@ def home_and_submit():
         topp = form.topp.data
         temperature = form.temperature.data
         cfg_coef = form.cfg_coef.data
-        
-        print(unload)
 
         melody = None
         sr = None
