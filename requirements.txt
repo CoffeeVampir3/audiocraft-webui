@@ -3,3 +3,4 @@ wtforms
 scipy
 numpy
 torch
+audiocraft
