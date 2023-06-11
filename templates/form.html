@@ -269,49 +269,26 @@
                     </div>                    
                 </div>
 
+                {% macro slider_field(name, min_value, max_value, step_value, data) %}
+                <div class="field">
+                    <label>{{ form[name].label }}</label>
+                    <input type="range" id="{{ name }}" name="{{ name }}" min="{{ min_value }}" max="{{ max_value }}" step="{{ step_value }}" value="{{ data }}">
+                    <span id="{{ name }}-value">{{ data }}</span>
+                </div>
+                {% endmacro %}
                 <div class="group slider-group">
                     <div>
-                        <div class="field">
-                            <label>{{ form.topk.label }}</label>
-                            <input type="range" id="topk" name="topk" min="0" max="1000" value="{{ form.topk.data }}">
-                            <span id="topk-value">{{ form.topk.data }}</span>
-                        </div>
-                        
-                        <div class="field">
-                            <label>{{ form.duration.label }}</label>
-                            <input type="range" id="duration" name="duration" min="1" max="30" value="{{ form.duration.data }}">
-                            <span id="duration-value">{{ form.duration.data }}</span>
-                        </div>
-                        
-                        <div class="field">
-                            <label>{{ form.cfg_coef.label }}</label>
-                            <input type="range" id="cfg_coef" name="cfg_coef" min="1" max="10" step="0.1" value="{{ form.cfg_coef.data }}">
-                            <span id="cfg_coef-value">{{ form.cfg_coef.data }}</span>
-                        </div>
+                        {{ slider_field('topk', 0, 1000, 1, form.topk.data) }}
+                        {{ slider_field('duration', 1, 30, 1, form.duration.data) }}
+                        {{ slider_field('cfg_coef', 1, 10, 0.1, form.cfg_coef.data) }}
                     </div>
                     <div>
-                        <div class="field">
-                            <label>{{ form.topp.label }}</label>
-                            <input type="range" id="topp" name="topp" min="0" max="1" step="0.01" value="{{ form.topp.data }}">
-                            <span id="topp-value">{{ form.topp.data }}</span>
-                        </div>
-                        <div class="field">
-                            <label>{{ form.temperature.label }}</label>
-                            <input type="range" id="temperature" name="temperature" min="1" max="5" step="0.01" value="{{ form.temperature.data }}">
-                            <span id="temperature-value">{{ form.temperature.data }}</span>
-                        </div>
-                        <div class="field">
-                            <label>{{ form.segments.label }}</label>
-                            <input type="range" id="segments" name="segments" min="1" max="10" value="{{ form.segments.data }}">
-                            <span id="segments-value">{{ form.segments.data }}</span>
-                        </div>
-                        <div class="field">
-                            <label>{{ form.overlap.label }}</label>
-                            <input type="range" id="overlap" name="overlap" min="0" max="10" step="0.1" value="{{ form.overlap.data }}">
-                            <span id="overlap-value">{{ form.overlap.data }}</span>
-                        </div>
+                        {{ slider_field('topp', 0, 1, 0.01, form.topp.data) }}
+                        {{ slider_field('temperature', 1, 5, 0.01, form.temperature.data) }}
+                        {{ slider_field('segments', 1, 10, 1, form.segments.data) }}
+                        {{ slider_field('overlap', 0, 10, 0.1, form.overlap.data) }}
                     </div>
-                </div>                               
+                </div>                            
 
                 <div class="group">
                     <div class="submit-container">
@@ -331,55 +308,17 @@
 </body>
 <script>
     // Select sliders and corresponding output elements by id
-    const durationSlider = document.querySelector('#duration');
-    const durationOutput = document.querySelector('#duration-value');
-    
-    const toppSlider = document.querySelector('#topp');
-    const toppOutput = document.querySelector('#topp-value');
-    
-    const temperatureSlider = document.querySelector('#temperature');
-    const temperatureOutput = document.querySelector('#temperature-value');
+    const sliderNames = ['duration', 'topp', 'temperature', 'topk', 'cfg_coef', 'segments', 'overlap'];
 
-    const topkSlider = document.querySelector('#topk');
-    const topkOutput = document.querySelector('#topk-value');
+    sliderNames.forEach(name => {
+        const slider = document.querySelector(`#${name}`);
+        const output = document.querySelector(`#${name}-value`);
 
-    const cfg_coefSlider = document.querySelector('#cfg_coef');
-    const cfg_coefOutput = document.querySelector('#cfg_coef-value');
-
-    const segmentsSlider = document.querySelector('#segments');
-    const segmentsOutput = document.querySelector('#segments-value');
-
-    const overlapSlider = document.querySelector('#overlap');
-    const overlapOutput = document.querySelector('#overlap-value');
-
-    // Update the output element whenever the slider value changes
-    durationSlider.oninput = function() {
-        durationOutput.textContent = this.value;
-    }
-
-    toppSlider.oninput = function() {
-        toppOutput.textContent = this.value;
-    }
-
-    temperatureSlider.oninput = function() {
-        temperatureOutput.textContent = this.value;
-    }
-
-    topkSlider.oninput = function() {
-        topkOutput.textContent = this.value;
-    }
-
-    cfg_coefSlider.oninput = function() {
-        cfg_coefOutput.textContent = this.value;
-    }
-
-    segmentsSlider.oninput = function() {
-        segmentsOutput.textContent = this.value;
-    }
-
-    overlapSlider.oninput = function() {
-        overlapOutput.textContent = this.value;
-    }
+        // Update the output element whenever the slider value changes
+        slider.oninput = function() {
+            output.textContent = this.value;
+        }
+    });
 
     document.getElementById("text").addEventListener("keydown", function(e) {
         if (e.keyCode === 13) {  // checks whether the pressed key is "Enter"
