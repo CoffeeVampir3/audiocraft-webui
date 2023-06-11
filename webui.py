@@ -11,12 +11,25 @@ from operator import itemgetter
 import json
 import librosa
 import soundfile as sf
+import sys
 
 MODEL = None
+unload = False
+
+if len(sys.argv) > 1:
+    if sys.argv[1] == "--unload-after-gen":
+        unload = True
 
 def load_model(version):
     print("Loading model", version)
-    return MusicGen.get_pretrained(version)
+    model = None
+    try:
+        model = MusicGen.get_pretrained(version)
+    except Exception as e:
+        print(f"Failed to load model due to error: {e}, you probably need to pick a smaller model.")
+        torch.cuda.empty_cache()
+        return None
+    return model
 
 def load_and_process_audio(melody_data, sr, model):
     if melody_data is not None:
@@ -59,7 +72,8 @@ def predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef
             del MODEL
             torch.cuda.empty_cache()
         MODEL = load_model(model)
-        print(MODEL)
+        if MODEL is None:
+            return None
         return predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef)
 
     #if duration > MODEL.lm.cfg.dataset.segment_duration:
@@ -86,7 +100,15 @@ def predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef
         output = MODEL.generate(descriptions=[text], progress=False)
 
     output = output.detach().cpu().numpy()
-    return MODEL.sample_rate, output
+    sample_rate = MODEL.sample_rate
+    
+    if unload:
+        import gc
+        del MODEL
+        torch.cuda.empty_cache()
+        gc.collect() 
+    
+    return sample_rate, output
 
 class MusicForm(Form):
     text = TextAreaField('Input Text', [DataRequired()])
@@ -120,6 +142,8 @@ def home_and_submit():
         topp = form.topp.data
         temperature = form.temperature.data
         cfg_coef = form.cfg_coef.data
+        
+        print(unload)
 
         melody = None
         sr = None
@@ -135,6 +159,8 @@ def home_and_submit():
                     print(f"Unsupported file extension: {extension}")
 
         output = predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef)
+        if output is None:
+            return None
         output_filename = save_output(output, form.text.data)
         
     if not os.path.exists('static/audio'):
