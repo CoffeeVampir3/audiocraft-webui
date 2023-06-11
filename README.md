@@ -23,10 +23,10 @@ The UI is in desperate need of an actual UI design if anyone wants to take on th
 
 ## Parameters:
 
-    Top-K: Unclear how it affects generation, needs more testing.
-    Top-P: Same as above.
-    Duration: Length of generated music.
-    Classifier Free Guidance: Controls creativity, lower number = "more creative freedom" in theory at least.
-    Temperature: Also a sort of creativity guide, your outputs will be terrible if this is too high.
-    Segments: Number of segments to generate. Each segment will be (duration-overlap) long, so if duration is 30 seconds and overlap is 5 seconds, with 3 segments, you will get 75 seconds of audio out.
-    Overlap: The overlap for the segment, as explained above. More overlap = more consistent music between segments.
+- **Top-K**: Unclear how it affects generation, needs more testing.
+- **Top-P**: Same as above.
+- **Duration**: Length of generated music.
+- **Classifier Free Guidance**: Controls creativity, lower number = "more creative freedom" in theory at least.
+- **Temperature**: Also a sort of creativity guide, your outputs will be terrible if this is too high.
+- **Segments**: Number of segments to generate. Each segment will be (duration-overlap) long, so if duration is 30 seconds and overlap is 5 seconds, with 3 segments, you will get 75 seconds of audio out.
+- **Overlap**: The overlap for the segment, as explained above. More overlap = more consistent music between segments.
