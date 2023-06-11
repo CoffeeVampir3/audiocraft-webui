@@ -232,4 +232,4 @@ def home_and_submit():
 if __name__ == '__main__':
     if not os.path.exists('static/audio'):
         os.makedirs('static/audio')
-    app.run()
+    app.run(debug=True)

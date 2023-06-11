@@ -330,9 +330,7 @@
                     <div class="audio-item-text">
                         {{ text }}
                     </div>                    
-                    <audio controls>
-                        <source src="{{ url_for('static', filename='audio/' + audio_file) }}" type="audio/wav">
-                    </audio>
+                    <source src="{{ url_for('static', filename='audio/' + audio_file) }}" type="audio/wav">
                 </div>
             {% endfor %}
             <div class="audio-padding"></div>  <!-- padding div test-->
