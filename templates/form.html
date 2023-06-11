@@ -2,34 +2,144 @@
 <html>
 <head>
     <title>Music Generator</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #101010;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+    
+        .container {
+            width: 80%;
+            max-width: 800px;
+            background-color: #202020;
+            padding: 3em;
+            border-radius: 1em;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.7);
+            transition: all 0.3s ease;
+        }
+    
+        .field {
+            margin-bottom: 2em;
+            width: 45%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            margin:auto;
+        }
+    
+        .field label {
+            display: block;
+            margin-bottom: 0.5em;
+            color: #ffffff;
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+    
+        #advanced-settings {
+            margin-top: 1em;
+            padding: 1em;
+            background-color: #202020;
+            border-radius: 0.25em;
+            transition: all 0.3s ease;
+        }
+    
+        #advanced-settings .field {
+            margin-bottom: 1em;
+        }
+    
+        .submit-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(0,0,0,0.1); /* light border */
+            background-color: #202020; /* dark background */
+            border-radius: 10px; /* rounded corners */
+            padding: 10px; /* some padding */
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2); /* subtle shadow */
+        }
+
+        .submit-container input[type="text"] {
+            flex-grow: 1;
+            margin-right: 1em;
+            background-color: #303030; /* even darker background */
+            border: none; /* no border */
+            border-radius: 0.25em; /* slightly rounded corners */
+            color: #ffffff; /* white text */
+            padding: 0.5em; /* some padding */
+            transition: all 0.3s ease;
+        }
+
+        .submit-container input[type="submit"] {
+            background-color: #707070; /* dark gray background */
+            color: #ffffff; /* white text */
+            border: none; /* no border */
+            padding: 0.5em 1em; /* some padding */
+            border-radius: 0.25em; /* slightly rounded corners */
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .group {
+            margin-bottom: 3em;
+        }
+    </style>
+    
 </head>
 <body>
-    <form method="POST">
-        <div>
-            {{ form.text.label }}: {{ form.text }}
-        </div>
-        <div>
-            {{ form.melody.label }}: {{ form.melody }}
-        </div>
-        <div>
-            {{ form.model.label }}: {{ form.model }}
-        </div>
-        <div>
-            {{ form.duration.label }}: {{ form.duration }}
-        </div>
-        <div>
-            {{ form.topk.label }}: {{ form.topk }}
-        </div>
-        <div>
-            {{ form.topp.label }}: {{ form.topp }}
-        </div>
-        <div>
-            {{ form.temperature.label }}: {{ form.temperature }}
-        </div>
-        <div>
-            {{ form.cfg_coef.label }}: {{ form.cfg_coef }}
-        </div>
-        {{ form.submit }}
-    </form>
+    <div class="container">
+        <form method="POST" enctype="multipart/form-data">
+            <div id="advanced-settings">
+                <div class="group">
+                    <div class="field">
+                        <label>{{ form.melody.label }}</label>
+                        <input type="file" id="melody" name="melody" accept="audio/*">
+                        <audio id="audio-preview" controls></audio>
+                    </div>
+                    <div class="field">
+                        <label>{{ form.model.label }}</label>
+                        {{ form.model }}
+                    </div>
+                </div>
+
+                <div class="group">
+                    <div class="field">
+                        <label>{{ form.duration.label }}</label>
+                        <input type="range" id="duration" name="duration" min="1" max="30" value="{{ form.duration.data }}">
+                        <span id="duration-value">{{ form.duration.data }}</span>
+                    </div>
+                    <div class="field">
+                        <label>{{ form.topk.label }}</label>
+                        <input type="number" id="topk" name="topk" min="0" value="{{ form.topk.data }}">
+                    </div>
+                    <div class="field">
+                        <label>{{ form.topp.label }}</label>
+                        <input type="range" id="topp" name="topp" min="0" max="1" step="0.01" value="{{ form.topp.data }}">
+                        <span id="topp-value">{{ form.topp.data }}</span>
+                    </div>
+                    <div class="field">
+                        <label>{{ form.temperature.label }}</label>
+                        <input type="range" id="temperature" name="temperature" min="0" max="7" step="0.01" value="{{ form.temperature.data }}">
+                        <span id="temperature-value">{{ form.temperature.data }}</span>
+                    </div>
+                </div>
+
+                <div class="group">
+                    <div class="submit-container">
+                        {{ form.text }}
+                        {{ form.submit }}
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
 </body>
 </html>

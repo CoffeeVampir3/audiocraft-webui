@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, send_file
-from wtforms import Form, StringField, FileField, RadioField, IntegerField, FloatField, SubmitField
+from wtforms import Form, StringField, FileField, RadioField, IntegerField, FloatField, SubmitField, SelectField
 from wtforms.validators import DataRequired, NumberRange
 from scipy.io import wavfile
 import numpy as np
@@ -19,7 +19,6 @@ def load_and_process_audio(melody, model):
         try:
             sr, melody = melody[0], torch.from_numpy(melody[1]).to(model.device).float().t().unsqueeze(0)
         except json.JSONDecodeError:
-            # If the file metadata can't be read, try a basic read method
             sr, melody = wavfile.read(melody)
             melody = torch.from_numpy(melody).to(model.device).float().t().unsqueeze(0)
 
@@ -65,7 +64,7 @@ def predict(model, text, melody, duration, topk, topp, temperature, cfg_coef):
 class MusicForm(Form):
     text = StringField('Input Text', [DataRequired()])
     melody = FileField('Melody Condition (optional)')
-    model = RadioField('Model', choices=[('melody', 'melody'), ('medium', 'medium'), ('small', 'small'), ('large', 'large')], default='melody')
+    model = SelectField('Model', choices=[('melody', 'melody'), ('medium', 'medium'), ('small', 'small'), ('large', 'large')], default='large')
     duration = IntegerField('Duration', default=10, validators=[NumberRange(min=1, max=30)])
     topk = IntegerField('Top-k', default=250)
     topp = FloatField('Top-p', default=0)
@@ -90,7 +89,7 @@ def home():
 
         # Load and process the audio file if one was uploaded
         melody = None
-        if 'melody' in request.files:
+        if 'melody' in request.files and request.files['melody'].filename != '':
             melody_file = request.files['melody']
             melody = wavfile.read(melody_file)
 
