@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Music Generator</title>
+</head>
+<body>
+    <form method="POST">
+        <div>
+            {{ form.text.label }}: {{ form.text }}
+        </div>
+        <div>
+            {{ form.melody.label }}: {{ form.melody }}
+        </div>
+        <div>
+            {{ form.model.label }}: {{ form.model }}
+        </div>
+        <div>
+            {{ form.duration.label }}: {{ form.duration }}
+        </div>
+        <div>
+            {{ form.topk.label }}: {{ form.topk }}
+        </div>
+        <div>
+            {{ form.topp.label }}: {{ form.topp }}
+        </div>
+        <div>
+            {{ form.temperature.label }}: {{ form.temperature }}
+        </div>
+        <div>
+            {{ form.cfg_coef.label }}: {{ form.cfg_coef }}
+        </div>
+        {{ form.submit }}
+    </form>
+</body>
+</html>
