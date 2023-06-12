@@ -9,7 +9,7 @@ More than 30 seconds of audio generation by using segments. It's basically the b
 
 ## Install:
 
-If you'd like gpu acceleration and do not have torch installed, visit <https://pytorch.org/get-started/locally/> for instructions on installing torch for your machine. If you do not have torch installed, by default this repo will pull default cpu-based torch right now.
+If you'd like gpu acceleration and do not have torch installed, visit https://pytorch.org/get-started/locally/ for instructions on installing gpu torch correctly.
 
 `pip install -r requirements.txt`
 (If you encounter errors with audiocraft installing, please refer to their docs here: <https://github.com/facebookresearch/audiocraft>)
