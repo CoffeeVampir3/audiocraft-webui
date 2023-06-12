@@ -227,6 +227,12 @@
             padding-bottom: 50px;
             padding-top: 50px;
         }
+
+        .slider-value {
+            text-align: center;
+            border: 3px;
+            border-radius: 20px;
+        }
     
         .field {
             flex-basis: 100%;
@@ -274,7 +280,7 @@
                 <div class="field">
                     <label>{{ form[name].label }}</label>
                     <input type="range" id="{{ name }}" name="{{ name }}" min="{{ min_value }}" max="{{ max_value }}" step="{{ step_value }}" value="{{ data }}">
-                    <span id="{{ name }}-value">{{ data }}</span>
+                    <input type="text" id="{{ name }}-text" value="{{ data }}" class="slider-value">
                 </div>
                 {% endmacro %}
                 <div class="group slider-group">
@@ -289,7 +295,7 @@
                         {{ slider_field('segments', 1, 10, 1, form.segments.data) }}
                         {{ slider_field('overlap', 0, 10, 0.1, form.overlap.data) }}
                     </div>
-                </div>                            
+                </div>                          
 
                 <div class="group">
                     <div class="submit-container">
@@ -313,11 +319,16 @@
 
     sliderNames.forEach(name => {
         const slider = document.querySelector(`#${name}`);
-        const output = document.querySelector(`#${name}-value`);
+        const textField = document.querySelector(`#${name}-text`);
 
-        // Update the output element whenever the slider value changes
+        // Update the text field whenever the slider value changes
         slider.oninput = function() {
-            output.textContent = this.value;
+            textField.value = this.value;
+        }
+
+        // Update the slider whenever the text field changes
+        textField.oninput = function() {
+            slider.value = this.value;
         }
     });
 
