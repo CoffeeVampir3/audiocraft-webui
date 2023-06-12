@@ -42,12 +42,28 @@ const completionColor = rootStyles.getPropertyValue('--hamster').trim();
 socket.on('progress', function(data) {
     const promptListDiv = document.querySelector('.prompt-queue');
     const firstPromptItem = promptListDiv.querySelector('.audio-item');
-    const firstPromptItemText = firstPromptItem.querySelector('.audio-item-text');
+    let segments = parseInt(firstPromptItem.getAttribute('data-segments'), 10);
+    let maxTokens = parseInt(firstPromptItem.getAttribute('data-max-tokens'), 10);
+    let completedSegments = parseInt(firstPromptItem.getAttribute('completed-segments'), 10);
+
     if (firstPromptItem) {
-        const completionPercentage = (data.generated_tokens / data.tokens_to_generate) * 100;  // calculate the completion percentage
+        if (data.generated_tokens < maxTokens && maxTokens != 0) {
+            // A new segment has started
+            completedSegments++;
+            firstPromptItem.setAttribute('data-max-tokens', '0'); // Reset maxTokens to 0 for the new segment
+            maxTokens = 0;
+        } else {
+            // We're still in the same segment
+            maxTokens = data.generated_tokens;
+            firstPromptItem.setAttribute('data-max-tokens', maxTokens.toString());
+        }
+
+        let completionPercentage = ((completedSegments * data.tokens_to_generate + data.generated_tokens) / (segments * data.tokens_to_generate)) * 100;  // calculate the completion percentage
+        
         // Use the CSS variable color in the gradient
         firstPromptItem.style.background = `linear-gradient(to right, ${completionColor} ${completionPercentage}%, transparent ${completionPercentage}%)`;  // update the gradient
-        firstPromptItem.querySelector('.audio-item-text').style.textShadow = '1px 3px 6px black'; 
+        firstPromptItem.querySelector('.audio-item-text').style.textShadow = '1px 3px 6px black';
+        firstPromptItem.setAttribute('completed-segments', completedSegments.toString());
     }
 });
 
@@ -75,7 +91,7 @@ $(document).ready(function() {
         var submitButton = $('#submit');
 
         submitButton.addClass('loading');  // add the loading class to the submit button
-        addPromptToQueue(formData.get('text'))
+        addPromptToQueue(formData)
 
         $.ajax({
             type: 'POST',
@@ -154,19 +170,39 @@ function appendNewAudioFile(file, audioListDiv = null, prepend = true) {
     }
 }
 
-function addPromptToQueue(prompt) {
+function addPromptToQueue(formData) {
     const promptListDiv = document.querySelector('.prompt-queue');
     const promptItemDiv = document.createElement('div');
     promptItemDiv.className = 'audio-item';
+    promptItemDiv.setAttribute('completed-segments', '0');
+    promptItemDiv.setAttribute('data-max-tokens', '0');
 
     // Add an initial gradient to the item
     promptItemDiv.style.background = 'linear-gradient(to right, blue 0%, transparent 0%)';  // initial gradient (0% completion)
 
     const promptItemTextDiv = document.createElement('div');
     promptItemTextDiv.className = 'audio-item-text';
-    promptItemTextDiv.textContent = prompt;
-    promptItemDiv.appendChild(promptItemTextDiv);
 
+    for (let [key, value] of formData.entries()) {
+        // Append all parameters as attributes
+        promptItemDiv.setAttribute(`data-${key}`, value);
+
+        // Create a new line only for 'text' form entry
+        if (key === 'text') {
+            const formEntry = document.createElement('p');
+            formEntry.textContent = `${value}`;
+            // Append form entry to text div
+            promptItemTextDiv.appendChild(formEntry);
+        }
+    }
+
+    let segments = parseInt(promptItemDiv.getAttribute('data-segments'), 10);
+    if (segments !== 1) {
+        segments += 1;
+    }
+    promptItemDiv.setAttribute('data-segments', segments.toString());    
+
+    promptItemDiv.appendChild(promptItemTextDiv);
     promptListDiv.appendChild(promptItemDiv);
 }
 

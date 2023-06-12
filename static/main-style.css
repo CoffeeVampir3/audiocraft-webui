@@ -81,6 +81,9 @@ form {
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 95vh;
 }
 
 .audio-list {
