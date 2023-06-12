@@ -1,45 +1,26 @@
 import torch
+import time
 import typing as tp
-import os
 from audiocraft.models import MusicGen
 from audiocraft.modules.conditioners import ConditioningAttributes
-from audiocraft.models.encodec import CompressionModel
-from audiocraft.models.lm import LMModel
-from audiocraft.models.builders import get_debug_compression_model, get_debug_lm_model
-from audiocraft.models.loaders import load_compression_model, load_lm_model, HF_MODEL_CHECKPOINTS_MAP
-
 
 class HijackedMusicGen(MusicGen):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, socketio=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._progress_callback = None  # direct assignment here
+        self.socketio = socketio
+        self._progress_callback = self._timed_progress_callback if socketio is not None else None
+        self._last_update_time = time.time()
+        
+    def _timed_progress_callback(self, generated_tokens: int, tokens_to_generate: int):
+        current_time = time.time()
+        if current_time - self._last_update_time >= 0.1:  # 0.1 seconds have passed
+            self.socketio.emit('progress', {'generated_tokens': generated_tokens, 'tokens_to_generate': tokens_to_generate})
+            self._last_update_time = current_time
         
     @staticmethod
-    def get_pretrained(name: str = 'melody', device='cuda'):
-        """Return pretrained model, we provide four models:
-        - small (300M), text to music, # see: https://huggingface.co/facebook/musicgen-small
-        - medium (1.5B), text to music, # see: https://huggingface.co/facebook/musicgen-medium
-        - melody (1.5B) text to music and text+melody to music, # see: https://huggingface.co/facebook/musicgen-melody
-        - large (3.3B), text to music, # see: https://huggingface.co/facebook/musicgen-large
-        """
-
-        if name == 'debug':
-            # used only for unit tests
-            compression_model = get_debug_compression_model(device)
-            lm = get_debug_lm_model(device)
-            return MusicGen(name, compression_model, lm)
-
-        if name not in HF_MODEL_CHECKPOINTS_MAP:
-            raise ValueError(
-                f"{name} is not a valid checkpoint name. "
-                f"Choose one of {', '.join(HF_MODEL_CHECKPOINTS_MAP.keys())}"
-            )
-
-        cache_dir = os.environ.get('MUSICGEN_ROOT', None)
-        compression_model = load_compression_model(name, device=device, cache_dir=cache_dir)
-        lm = load_lm_model(name, device=device, cache_dir=cache_dir)
-
-        return HijackedMusicGen(name, compression_model, lm)
+    def get_pretrained(socketio, name: str = 'melody', device='cuda'):
+        music_gen = MusicGen.get_pretrained(name, device)
+        return HijackedMusicGen(socketio, music_gen.name, music_gen.compression_model, music_gen.lm)
 
     def _generate_tokens(self, attributes: tp.List[ConditioningAttributes],
                          prompt_tokens: tp.Optional[torch.Tensor], progress: bool = False) -> torch.Tensor:

@@ -9,11 +9,11 @@ from generator import HijackedMusicGen
 
 MODEL = None
 
-def load_model(version):
+def load_model(version, socketio):
     print("Loading model", version)
     model = None
     try:
-        model = HijackedMusicGen.get_pretrained(version)
+        model = HijackedMusicGen.get_pretrained(socketio, version)
     except Exception as e:
         print(f"Failed to load model due to error: {e}, you probably need to pick a smaller model.")
         torch.cuda.empty_cache()
@@ -32,7 +32,7 @@ def load_and_process_audio(model, melody, sample_rate):
         return None
 
 #From https://colab.research.google.com/drive/154CqogsdP-D_TfSF9S2z8-BY98GN_na4?usp=sharing#scrollTo=exKxNU_Z4i5I
-#Thank you DragonForged
+#Thank you DragonForged for the link
 def extend_audio(model, prompt_waveform, prompt, prompt_sr, segments=5, overlap=2):
     # Calculate the number of samples corresponding to the overlap
     overlap_samples = int(overlap * prompt_sr)
@@ -58,27 +58,23 @@ import logging
 
 logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler(sys.stdout)])
 
-def predict(model, prompt, model_parameters, melody_parameters, extension_parameters, extra_settings_parameters):
+def predict(socketio, model, prompt, model_parameters, melody_parameters, extension_parameters, extra_settings_parameters):
     global MODEL
     if MODEL is None or MODEL.name != model:
         if MODEL is not None:
             del MODEL
             torch.cuda.empty_cache()
             torch.cuda.synchronize()
-        MODEL = load_model(model)
+        MODEL = load_model(model, socketio)
         if MODEL is None:
             return None
-        return predict(model, prompt, model_parameters, melody_parameters, extension_parameters, extra_settings_parameters)
+        return predict(socketio, model, prompt, model_parameters, melody_parameters, extension_parameters, extra_settings_parameters)
 
     MODEL.set_generation_params(
         use_sampling=True,
         **model_parameters,
     )
     
-    def _progress_callback(generated_tokens: int, tokens_to_generate: int):
-        logging.info(f'{generated_tokens: 6d} / {tokens_to_generate: 6d}')
-    
-    MODEL.progress_callback = _progress_callback
     melody = load_and_process_audio(MODEL, **melody_parameters)
 
     if melody is not None:

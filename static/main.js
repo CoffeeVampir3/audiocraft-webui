@@ -36,6 +36,21 @@ socket.on('new_file', function(data) {
     }
 });
 
+const rootStyles = getComputedStyle(document.documentElement);  
+const completionColor = rootStyles.getPropertyValue('--hamster').trim();  
+
+socket.on('progress', function(data) {
+    const promptListDiv = document.querySelector('.prompt-queue');
+    const firstPromptItem = promptListDiv.querySelector('.audio-item');
+    const firstPromptItemText = firstPromptItem.querySelector('.audio-item-text');
+    if (firstPromptItem) {
+        const completionPercentage = (data.generated_tokens / data.tokens_to_generate) * 100;  // calculate the completion percentage
+        // Use the CSS variable color in the gradient
+        firstPromptItem.style.background = `linear-gradient(to right, ${completionColor} ${completionPercentage}%, transparent ${completionPercentage}%)`;  // update the gradient
+        firstPromptItem.querySelector('.audio-item-text').style.textShadow = '1px 3px 6px black'; 
+    }
+});
+
 $(document).ready(function() {
     function toggleMelodyField() {
         let model = $("#model").val();
@@ -144,9 +159,11 @@ function addPromptToQueue(prompt) {
     const promptItemDiv = document.createElement('div');
     promptItemDiv.className = 'audio-item';
 
+    // Add an initial gradient to the item
+    promptItemDiv.style.background = 'linear-gradient(to right, blue 0%, transparent 0%)';  // initial gradient (0% completion)
+
     const promptItemTextDiv = document.createElement('div');
     promptItemTextDiv.className = 'audio-item-text';
-    console.log(prompt)
     promptItemTextDiv.textContent = prompt;
     promptItemDiv.appendChild(promptItemTextDiv);
 

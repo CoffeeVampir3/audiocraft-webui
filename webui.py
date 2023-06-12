@@ -87,7 +87,7 @@ def handle_submit(form, files):
     for name, value in {**model_parameters, **extension_parameters}.items():
         print(f"{name}: {value}")
 
-    output = predict(model, prompt, model_parameters, melody_parameters, extension_parameters, extra_settings_parameters)
+    output = predict(socketio, model, prompt, model_parameters, melody_parameters, extension_parameters, extra_settings_parameters)
     if output is None:
         return None
     output_filename = save_output(output, prompt)
