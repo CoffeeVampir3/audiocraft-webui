@@ -1,3 +1,5 @@
+[![Discord](https://img.shields.io/discord/<SERVER_ID>?logo=discord)](https://discord.gg/2JhHVh7CGu)
+
 # audiocraft-webui
 Local webui for Facebook's Audiocraft model: <https://github.com/facebookresearch/audiocraft>
 
