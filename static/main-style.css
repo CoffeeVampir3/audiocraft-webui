@@ -221,6 +221,8 @@ form {
 }
 
 .slider-value {
+    background-color: var(--jellyfish);
+    width: 40px;
     text-align: center;
     border: 3px;
     border-radius: 20px;
