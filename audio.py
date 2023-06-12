@@ -2,10 +2,10 @@ from scipy.io import wavfile
 import numpy as np
 import os, re, json, sys
 import torch, torchaudio, pathlib
-from audiocraft.models import MusicGen
 from operator import itemgetter
 import librosa
 import soundfile as sf
+from generator import HijackedMusicGen
 
 MODEL = None
 
@@ -13,7 +13,7 @@ def load_model(version):
     print("Loading model", version)
     model = None
     try:
-        model = MusicGen.get_pretrained(version)
+        model = HijackedMusicGen.get_pretrained(version)
     except Exception as e:
         print(f"Failed to load model due to error: {e}, you probably need to pick a smaller model.")
         torch.cuda.empty_cache()
@@ -54,6 +54,9 @@ def extend_audio(model, prompt_waveform, prompt, prompt_sr, segments=5, overlap=
 
     return prompt_waveform.detach().cpu().numpy()
 
+import logging
+
+logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler(sys.stdout)])
 
 def predict(model, prompt, model_parameters, melody_parameters, extension_parameters, extra_settings_parameters):
     global MODEL
@@ -72,6 +75,10 @@ def predict(model, prompt, model_parameters, melody_parameters, extension_parame
         **model_parameters,
     )
     
+    def _progress_callback(generated_tokens: int, tokens_to_generate: int):
+        logging.info(f'{generated_tokens: 6d} / {tokens_to_generate: 6d}')
+    
+    MODEL.progress_callback = _progress_callback
     melody = load_and_process_audio(MODEL, **melody_parameters)
 
     if melody is not None:
@@ -82,7 +89,7 @@ def predict(model, prompt, model_parameters, melody_parameters, extension_parame
             progress=False
         )
     else:
-        output = MODEL.generate(descriptions=[prompt], progress=False)
+        output = MODEL.generate(descriptions=[prompt], progress=True)
 
     sample_rate = MODEL.sample_rate
     
