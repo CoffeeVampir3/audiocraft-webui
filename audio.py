@@ -54,10 +54,6 @@ def extend_audio(model, prompt_waveform, prompt, prompt_sr, segments=5, overlap=
 
     return prompt_waveform.detach().cpu().numpy()
 
-import logging
-
-logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler(sys.stdout)])
-
 def predict(socketio, model, prompt, model_parameters, melody_parameters, extension_parameters, extra_settings_parameters):
     global MODEL
     if MODEL is None or MODEL.name != model:
