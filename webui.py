@@ -11,9 +11,11 @@ from operator import itemgetter
 import librosa
 import soundfile as sf
 from audio import predict
+from flask_bootstrap import Bootstrap5
 
 app = Flask(__name__)
 unload = False
+bootstrap = Bootstrap5(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 pending_queue = queue.Queue()
 
@@ -140,4 +142,4 @@ if __name__ == '__main__':
     if not os.path.exists('static/audio'):
         os.makedirs('static/audio')
     threading.Thread(target=worker_process_queue, daemon=True).start()
-    socketio.run(app)
+    socketio.run(app, use_reloader = True, debug = True)

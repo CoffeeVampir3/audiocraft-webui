@@ -6,6 +6,8 @@ from operator import itemgetter
 import librosa
 import soundfile as sf
 from generator import HijackedMusicGen
+import random
+import string
 
 MODEL = None
 
@@ -66,6 +68,7 @@ def predict(socketio, model, prompt, model_parameters, melody_parameters, extens
             return None
         return predict(socketio, model, prompt, model_parameters, melody_parameters, extension_parameters, extra_settings_parameters)
 
+    MODEL.set_ui_generation_params(''.join(random.choice(string.ascii_lowercase) for i in range(10)), prompt)
     MODEL.set_generation_params(
         use_sampling=True,
         **model_parameters,

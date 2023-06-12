@@ -7,14 +7,20 @@ from audiocraft.modules.conditioners import ConditioningAttributes
 class HijackedMusicGen(MusicGen):
     def __init__(self, socketio=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.id = None
+        self.prompt = None
         self.socketio = socketio
         self._progress_callback = self._timed_progress_callback if socketio is not None else None
         self._last_update_time = time.time()
         
+    def set_ui_generation_params(self, id: str, prompt: str):
+        self.id = id
+        self.prompt = prompt
+        
     def _timed_progress_callback(self, generated_tokens: int, tokens_to_generate: int):
         current_time = time.time()
         if current_time - self._last_update_time >= 0.1:  # 0.1 seconds have passed
-            self.socketio.emit('progress', {'generated_tokens': generated_tokens, 'tokens_to_generate': tokens_to_generate})
+            self.socketio.emit('progress', {'generated_tokens': generated_tokens, 'tokens_to_generate': tokens_to_generate, 'id': self.id, 'prompt': self.prompt })
             self._last_update_time = current_time
         
     @staticmethod

@@ -1,66 +1,214 @@
+{% from 'bootstrap5/utils.html' import render_icon %}
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Music Generator</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='main-style.css') }}">
-    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-</head>
-<body>
-    <div class="container">
-        <form id="form" method="POST" enctype="multipart/form-data">
-            <div id="advanced-settings" class="third-box">
-                
-                <div class="group model-melody">
-                    <div id="melody-field" class="field">
-                        <label>{{ form.melody.label }}</label>
-                        <input type="file" id="melody" name="melody" accept="audio/*">
-                        <audio id="audio-preview" controls></audio>
-                    </div>
-                    <div class="field">
-                        <label>{{ form.model.label }}</label>
-                        {{ form.model(id="model") }}
-                    </div>                    
-                </div>
+    <head>
+        <title>Music Generator</title>
+        {#
+        <link rel="stylesheet" href="{{ url_for('static', filename='main-style.css') }}" />
+        #}
+        <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet" />
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.min.js"
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        ></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        {{ bootstrap.load_css() }}
+        <style>
+            .audio-item:hover,
+            .audio-item.selected {
+                --bs-bg-opacity: 0.25;
+                background-color: rgba(var(--bs-secondary-rgb), var(--bs-bg-opacity)) !important;
+            }
+        </style>
+    </head>
+    <body>
+        {% macro slider_field(name, min_value, max_value, step_value, data) %}
+        <div class="row">
+            <div class="col-3">
+                <label class="form-label text-sm">{{ form[name].label }}</label>
+            </div>
+            <div class="col-7">
+                <input
+                    class="form-range flex-grow-1"
+                    type="range"
+                    id="{{ name }}"
+                    name="{{ name }}"
+                    min="{{ min_value }}"
+                    max="{{ max_value }}"
+                    step="{{ step_value }}"
+                    value="{{ data }}"
+                />
+            </div>
+            <div class="col-2">
+                <input
+                    type="number"
+                    id="{{ name }}-text"
+                    value="{{ data }}"
+                    min="{{ min_value }}"
+                    max="{{ max_value }}"
+                    step="{{ step_value }}"
+                    class="form-control form-control-sm"
+                />
+            </div>
+        </div>
+        <script>
+            ((name) => {
+                const slider = document.querySelector(`#${name}`);
+                const textField = document.querySelector(`#${name}-text`);
 
-                {% macro slider_field(name, min_value, max_value, step_value, data) %}
-                <div class="field">
-                    <label>{{ form[name].label }}</label>
-                    <input type="range" id="{{ name }}" name="{{ name }}" min="{{ min_value }}" max="{{ max_value }}" step="{{ step_value }}" value="{{ data }}">
-                    <input type="text" id="{{ name }}-text" value="{{ data }}" class="slider-value">
-                </div>
-                {% endmacro %}
-                <div class="group slider-group">
-                    <div>
-                        {{ slider_field('topk', 0, 1000, 1, form.topk.data) }}
-                        {{ slider_field('duration', 1, 30, 1, form.duration.data) }}
-                        {{ slider_field('cfg_coef', 1, 10, 0.1, form.cfg_coef.data) }}
-                    </div>
-                    <div>
-                        {{ slider_field('topp', 0, 1, 0.01, form.topp.data) }}
-                        {{ slider_field('temperature', 0.1, 5, 0.01, form.temperature.data) }}
-                        {{ slider_field('segments', 1, 10, 1, form.segments.data) }}
-                        {{ slider_field('overlap', 0, 10, 0.1, form.overlap.data) }}
-                    </div>
-                </div>                          
+                slider.oninput = function () {
+                    textField.value = this.value;
+                };
 
-                <div class="group">
-                    <div class="submit-container">
-                        <div class="input-wrapper">
-                            <textarea id="text" name="text" rows="3" required=""></textarea>
-                            <input id="submit" name="submit" type="submit" value="Submit">
+                textField.oninput = function () {
+                    slider.value = this.value;
+                };
+            })('{{name}}');
+        </script>
+        {% endmacro %}
+
+        <div class="container-fluid d-flex flex-column flex-grow-1 vh-100 overflow-hidden">
+            <div class="row flex-grow-1 overflow-hidden">
+                <!-- Sidebar -->
+                <div class="col-2 p-2 mh-100 flex flex-column">
+                    <h3>Results</h3>
+                    <!-- Scrollable flex container hax -->
+                    <div class="flex flex-column flex-items-stretch flex-1 overflow-auto" style="max-height: calc(100% - 50px)">
+                        <div class="d-flex flex-column flex-items-stretch flex-grow-0 flex-shrink-0 gap-1">
+                            <!-- Queue Item Template -->
+                            <div class="queue-item d-flex d-none flex-column flex-items-stretch rounded p-2 me-2 position-relative">
+                                <h6 class="queue-item__title">My Long File Name With Random Words And All That Nonsense.mp3</h6>
+                                <div class="progress">
+                                    <div class="progress-bar queue-item__progress-bar" role="progressbar"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-column flex-items-stretch flex-grow-0 flex-shrink-0 gap-1">
+                            <!-- Audio Item Template -->
+                            <div class="audio-item d-flex d-none flex-column flex-items-stretch rounded p-2 me-2 position-relative">
+                                <h6 class="audio-item__title">My Long File Name With Random Words And All That Nonsense.mp3</h6>
+                                <div class="d-flex flex-row justify-content-between">
+                                    <span class="audio-item__timestamp text-muted">23/2/22 at 3:23pm</span>
+                                    <span class="audio-item__duration text-muted">00:32</span>
+                                </div>
+                                <a href="javascript:void(0);" class="stretched-link"></a>
+                            </div>
                         </div>
                     </div>
                 </div>
-                
+                <!-- Main Panel -->
+                <div class="col-10 d-flex flex-column justify-content-center align-items-center">
+                    <!-- Generation Form -->
+                    <form
+                        id="form"
+                        method="POST"
+                        enctype="multipart/form-data"
+                        class="d-flex flex-column justify-content-center align-items-stretch"
+                        style="width: 80%"
+                    >
+                        <!-- Prompt Input -->
+                        <div class="input-group">
+                            <textarea
+                                id="prompt-input"
+                                name="text"
+                                rows="1"
+                                required=""
+                                placeholder="Enter a prompt..."
+                                class="grow form-control"
+                            ></textarea>
+                            <input id="prompt-submit" name="submit" type="submit" value="Submit" class="btn btn-outline-primary" />
+                        </div>
+                        <!-- Card Exterior Label -->
+                        <div class="d-flex flex-column align-items-center mt-2">
+                            {{ render_icon('chevron-up', '2em') }}
+                            <h4>Tune Parameters</h4>
+                        </div>
+                        <!-- Parameters -->
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label class="form-label">{{ form.model.label }}</label>
+                                        {{ form.model(id="model", class="form-control") }}
+                                    </div>
+                                    <div class="col-6 form__pick-melody">
+                                        <div class="d-flex gap-2">
+                                            <button type="button" id="pick-melody" class="btn btn-secondary">Pick Optional Melody</button>
+                                            <button type="button" id="remove-melody" class="btn btn-outline-danger">
+                                                {{ render_icon('x-lg') }}
+                                            </button>
+                                        </div>
+                                        <input type="file" id="melody" name="melody" accept="audio/*" class="visually-hidden" />
+                                        <audio id="melody-preview" controls class="pt-1"></audio>
+                                    </div>
+                                </div>
+                                <div class="row mt-5">
+                                    <div class="col-6">
+                                        {{ slider_field('topk', 0, 1000, 1, form.topk.data) }} {{ slider_field('duration', 1, 30, 1,
+                                        form.duration.data) }} {{ slider_field('cfg_coef', 1, 10, 0.1, form.cfg_coef.data) }}
+                                    </div>
+                                    <div class="col-6">
+                                        {{ slider_field('topp', 0, 1, 0.01, form.topp.data) }} {{ slider_field('temperature', 0.1, 5, 0.01,
+                                        form.temperature.data) }} {{ slider_field('segments', 1, 10, 1, form.segments.data) }} {{
+                                        slider_field('overlap', 0, 10, 0.1, form.overlap.data) }}
+                                    </div>
+                                </div>
+                                <div class="col d-flex gap-2"></div>
+                                <div>
+                                    <div class="group slider-group">
+                                        <div></div>
+                                        <div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </form>
-
-        <div class="prompt-queue third-box"></div>
-        <div class="audio-list third-box"></div>        
-
-    </div>
-</body>
-<script src="{{ url_for('static', filename='main.js') }}"></script>
+            <!-- Bottom Bar -->
+            <div class="row flex-shrink-0 bg-light">
+                <div class="col py-2 d-flex justify-content-center">
+                    <!-- Playback Controls -->
+                    <div class="playback mw-100 flex-grow-1 d-flex justify-content-between align-items-center gap-3">
+                        <!-- Left -->
+                        <div class="d-flex justify-content-end" style="width: 45%">
+                            <audio class="d-none"></audio>
+                            <h5 class="playback__title text-truncate"></h5>
+                        </div>
+                        <!-- Center -->
+                        <div class="d-flex justify-content-center" style="width: 10%">
+                            <button class="playback__play-btn btn">{{ render_icon('play-fill', '2em') }}</button>
+                            <button class="playback__pause-btn btn">{{ render_icon('pause-fill', '2em') }}</button>
+                            <button class="playback__restart-btn btn">{{ render_icon('arrow-counterclockwise', '2em') }}</button>
+                            <button class="playback__error-btn btn text-warning">
+                                {{ render_icon('exclamation-triangle-fill', '2em') }}
+                            </button>
+                        </div>
+                        <!-- Right -->
+                        <div class="d-flex" style="width: 40%">
+                            <div class="playback__time d-flex flex-column align-items-center">
+                                <input
+                                    class="playback__seek form-range flex-grow-1"
+                                    type="range"
+                                    id="seek"
+                                    name="seek"
+                                    min="0"
+                                    max="0"
+                                    value="0"
+                                    step="0.1"
+                                />
+                                <label class=""></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    {{ bootstrap.load_js() }}
+    <script src="{{ url_for('static', filename='utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='playback.js') }}"></script>
+    <script src="{{ url_for('static', filename='sidebar.js') }}"></script>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
 </html>
