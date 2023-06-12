@@ -9,3 +9,4 @@ soundfile
 audioread
 flask_socketio
 torchaudio
+ffmpeg
