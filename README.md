@@ -7,7 +7,8 @@ Local webui for Facebook's Audiocraft model: <https://github.com/facebookresearc
 
 ## Features:
 
-More than 30 seconds of audio generation by using segments. It's basically the biggest deal of all time ever.
+- **Long Audio**: More than 30 seconds of audio generation by using segments. It's basically the biggest deal of all time ever.
+- **Processing Queue**: Add as many different prompts to the processing queue as you like, go have a cup of coffee, come back to sweet sweet audio.
 
 ## Install:
 
