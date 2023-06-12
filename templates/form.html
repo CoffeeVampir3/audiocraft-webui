@@ -2,16 +2,16 @@
 <html>
 <head>
     <title>Music Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main-style.css') }}">
     <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='main-style.css') }}">
 </head>
 <body>
     <div class="container">
         <form id="form" method="POST" enctype="multipart/form-data">
             <div id="advanced-settings">
                 
-                <div class="group">
+                <div class="group model-melody">
                     <div id="melody-field" class="field">
                         <label>{{ form.melody.label }}</label>
                         <input type="file" id="melody" name="melody" accept="audio/*">

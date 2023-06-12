@@ -41,7 +41,7 @@ body {
 
 select {
     background-color: var(--opossum);
-    color: var(--cuttlefish);
+    color: var(--jellyfish);
     font-size: 18px;
 }
 
@@ -59,6 +59,7 @@ textarea {
     transition: all 0.3s ease;
     display: flex;
     justify-content: space-between;
+    max-height: 95vh;
 }
 
 form {
@@ -142,6 +143,9 @@ form {
     align-items: center;
     flex-direction: column;
     margin:auto;
+    flex-basis: 0;
+    padding: 10px;
+    flex-grow: 1;
 }
 
 .field label {
@@ -171,6 +175,7 @@ form {
 .input-wrapper textarea {
     resize: none;
     margin-bottom: 10px;
+    border-radius: 12px;
 }
 
 .input-wrapper input[type="submit"] {
@@ -209,9 +214,14 @@ form {
     transform: scale(0.95);
 }
 
+.model-melody {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: start;
+}
+
 .group {
     display: flex;
-    flex-wrap: wrap;
     justify-content: space-between;
 }
 
@@ -226,11 +236,6 @@ form {
     text-align: center;
     border: 3px;
     border-radius: 20px;
-}
-
-.field {
-    flex-basis: 100%;
-    padding: 10px;
 }
 
 .group > div {
