@@ -4,42 +4,20 @@ from wtforms.validators import DataRequired, NumberRange
 from scipy.io import wavfile
 import numpy as np
 import os, re, json, sys
-import torch, torchaudio
+import torch, torchaudio, pathlib
 from audiocraft.models import MusicGen
 from operator import itemgetter
 import librosa
 import soundfile as sf
 
-MODEL = None
+from audio import predict
+
 unload = False
 
 if len(sys.argv) > 1:
     if sys.argv[1] == "--unload-after-gen":
         unload = True
-
-def load_model(version):
-    print("Loading model", version)
-    model = None
-    try:
-        model = MusicGen.get_pretrained(version)
-    except Exception as e:
-        print(f"Failed to load model due to error: {e}, you probably need to pick a smaller model.")
-        torch.cuda.empty_cache()
-        torch.cuda.synchronize()
-        return None
-    return model
-
-def load_and_process_audio(melody_data, sr, model):
-    if melody_data is not None:
-        melody = torch.from_numpy(melody_data).to(model.device).float().t().unsqueeze(0)
-        if melody.dim() == 2:
-            melody = melody[None]
-        melody = melody[..., :int(sr * model.lm.cfg.dataset.segment_duration)]
-        return melody
-    else:
-        return None
-    
-
+        
 def sanitize_filename(filename):
     """
     Takes a filename and returns a sanitized version safe for filesystem operations.
@@ -60,87 +38,51 @@ def save_output(output, text):
 
     wavfile.write(output_filename, output[0], np.array(output[1], dtype=np.float32))
     return output_filename
-
-#From https://colab.research.google.com/drive/154CqogsdP-D_TfSF9S2z8-BY98GN_na4?usp=sharing#scrollTo=exKxNU_Z4i5I
-#Thank you DragonForged
-def extend_audio(model, prompt_waveform, prompt, prompt_sr, num_segments=5, overlap=2):
-    # Calculate the number of samples corresponding to the overlap
-    overlap_samples = int(overlap * prompt_sr)
-
-    device = model.device
-    prompt_waveform = prompt_waveform.to(device)
+        
+def handle_submit(form):
+    model = form.model.data
+    prompt = form.text.data
+    model_parameters = {
+        "duration": form.duration.data,
+        "top_k": form.topk.data,
+        "top_p": form.topp.data,
+        "temperature": form.temperature.data,
+        "cfg_coef": form.cfg_coef.data,
+    }
+    melody_parameters = {
+        "melody": None,
+        "sample_rate": None,
+    }
+    extension_parameters = {
+        "segments": form.segments.data,
+        "overlap": form.overlap.data
+    }
     
-    print(num_segments)
-    print(overlap)
+    extra_settings_parameters = {
+        "unload": unload,
+    }
 
-    for _ in range(num_segments):
-        # Grab the end of the waveform
-        end_waveform = prompt_waveform[...,-overlap_samples:]
+    if 'melody' in request.files and request.files['melody'].filename != '':
+        if form.model.data != 'melody':
+            pass
+        else:
+            melody_file = request.files['melody']
+            extension = os.path.splitext(melody_file.filename)[1]
+            if extension.lower() in ['.wav', '.mp3']:
+                melody_parameters['melody'], melody_parameters['sample_rate'] = librosa.load(melody_file, sr=None)
+                print(f"Using melody file: {melody_file}")
+            else:
+                print(f"Unsupported file extension: {extension}")
 
-        # Process the trimmed waveform using the model
-        new_audio = model.generate_continuation(end_waveform, descriptions=[prompt], prompt_sample_rate=prompt_sr, progress=True)
-            
-        # Cut the seed audio off the newly generated audio
-        new_audio = new_audio[...,overlap_samples:]
+    for name, value in {**model_parameters, **extension_parameters}.items():
+        print(f"{name}: {value}")
 
-        prompt_waveform = torch.cat([prompt_waveform, new_audio], dim=2)
+    output = predict(model, prompt, model_parameters, melody_parameters, extension_parameters, extra_settings_parameters)
+    if output is None:
+        return None
+    output_filename = save_output(output, prompt)
 
-    return prompt_waveform.detach().cpu().numpy()
-
-
-def predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef, segments, overlap):
-    global MODEL
-    topk = int(topk)
-    if MODEL is None or MODEL.name != model:
-        if MODEL is not None:
-            del MODEL
-            torch.cuda.empty_cache()
-            torch.cuda.synchronize()
-        MODEL = load_model(model)
-        if MODEL is None:
-            return None
-        return predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef, segments, overlap)
-
-    #if duration > MODEL.lm.cfg.dataset.segment_duration:
-    #    raise gr.Error("MusicGen currently supports durations of up to 30 seconds!")
-    MODEL.set_generation_params(
-        use_sampling=True,
-        top_k=topk,
-        top_p=topp,
-        temperature=temperature,
-        cfg_coef=cfg_coef,
-        duration=duration,
-    )
-    
-    melody = load_and_process_audio(melody, sr, MODEL)
-
-    if melody is not None:
-        output = MODEL.generate_with_chroma(
-            descriptions=[text],
-            melody_wavs=melody,
-            melody_sample_rate=sr,
-            progress=False
-        )
-    else:
-        output = MODEL.generate(descriptions=[text], progress=False)
-
-    sample_rate = MODEL.sample_rate
-    
-    if segments > 1:
-        output_tensors = extend_audio(MODEL, output, text, sample_rate, segments, overlap)
-    else:
-        output_tensors = output.detach().cpu().numpy()
-    
-    if unload:
-        del output
-        import gc
-        del MODEL
-        MODEL = None
-        gc.collect() 
-        torch.cuda.empty_cache()
-        torch.cuda.synchronize()
-    
-    return sample_rate, output_tensors
+    return output_filename
 
 class MusicForm(Form):
     text = TextAreaField('Input Text', [DataRequired()])
@@ -151,7 +93,7 @@ class MusicForm(Form):
     topp = FloatField('Top-p', default=0)
     temperature = FloatField('Temperature', default=1.0)
     cfg_coef = FloatField('Classifier Free Guidance', default=7.0)
-    segments = IntegerField('Segments', default=5, validators=[NumberRange(min=1, max=10)])
+    segments = IntegerField('Segments', default=1, validators=[NumberRange(min=1, max=10)])
     overlap = FloatField('Overlap', default=5.0) 
     submit = SubmitField('Submit')
 
@@ -169,59 +111,20 @@ def home_and_submit():
     output_filename = None  # Initialize output_filename here
 
     if request.method == 'POST' and form.validate():
-        model = form.model.data
-        text = form.text.data
-        duration = form.duration.data
-        topk = form.topk.data
-        topp = form.topp.data
-        temperature = form.temperature.data
-        cfg_coef = form.cfg_coef.data
-        segments = form.segments.data
-        overlap = form.overlap.data
+        output_filename = handle_submit(form)
         
-        parameters = {
-            "model": model,
-            "text": text,
-            "duration": duration,
-            "topk": topk,
-            "topp": topp,
-            "temperature": temperature,
-            "cfg_coef": cfg_coef,
-            "segments": segments,
-            "overlap": overlap
-        }
+    audio_dir = pathlib.Path('static/audio')
+    audio_dir.mkdir(parents=True, exist_ok=True)
 
-        for name, value in parameters.items():
-            print(f"{name}: {value}")
-
-        melody = None
-        sr = None
-        if 'melody' in request.files and request.files['melody'].filename != '':
-            if form.model.data != 'melody':
-                pass
-            else:
-                melody_file = request.files['melody']
-                extension = os.path.splitext(melody_file.filename)[1]
-                if extension.lower() in ['.wav', '.mp3']:
-                    melody, sr = librosa.load(melody_file, sr=None)
-                else:
-                    print(f"Unsupported file extension: {extension}")
-
-        output = predict(model, text, melody, sr, duration, topk, topp, temperature, cfg_coef, segments, overlap)
-        if output is None:
-            return None
-        output_filename = save_output(output, form.text.data)
-        
-    if not os.path.exists('static/audio'):
-        os.makedirs('static/audio')
-
-    audio_files = [(f, f, os.path.getmtime(f'static/audio/{f}')) for f in os.listdir('static/audio')]
-    audio_files_dicts = [{'text': text, 'audio_file': audio_file, 'timestamp': timestamp} for text, audio_file, timestamp in audio_files]
+    audio_files_dicts = [
+        {'text': audio_file.name, 'audio_file': audio_file.name, 'timestamp': audio_file.stat().st_mtime}
+        for audio_file in audio_dir.glob('*')
+    ]
     
     if request.method == 'POST':
         # If the output_filename is not None, find the corresponding file in the audio_files list and return it
         if output_filename is not None:
-            output_filename = os.path.basename(output_filename)
+            output_filename = pathlib.Path(output_filename).name
             new_file = next((file for file in audio_files_dicts if file['audio_file'] == output_filename), None)
             return jsonify(new_file)
         else:
