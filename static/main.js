@@ -83,6 +83,8 @@ $(document).ready(function () {
 
         submitButton.addClass('loading');
 
+        //todo -- get queue job id and prompt from success api response to put in queue 
+        // (since our queue is not parallelized atm, we can't wait for a socket progress event to add to the queue)
         $.ajax({
             type: 'POST',
             url: '/',
