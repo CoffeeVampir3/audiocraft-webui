@@ -20,7 +20,7 @@ document.getElementById("text").addEventListener("keydown", function(e) {
     }
 });
 
-var socket = io.connect('http://localhost:5000');  // replace with your server address
+var socket = io.connect('http://localhost:5000');
 socket.on('new_file', function(data) {
     var output_filename = data.output_filename;
     var new_file = {
@@ -50,7 +50,7 @@ socket.on('progress', function(data) {
         if (data.generated_tokens < maxTokens && maxTokens != 0) {
             // A new segment has started
             completedSegments++;
-            firstPromptItem.setAttribute('data-max-tokens', '0'); // Reset maxTokens to 0 for the new segment
+            firstPromptItem.setAttribute('data-max-tokens', '0');
             maxTokens = 0;
         } else {
             // We're still in the same segment
@@ -60,8 +60,7 @@ socket.on('progress', function(data) {
 
         let completionPercentage = ((completedSegments * data.tokens_to_generate + data.generated_tokens) / (segments * data.tokens_to_generate)) * 100;  // calculate the completion percentage
         
-        // Use the CSS variable color in the gradient
-        firstPromptItem.style.background = `linear-gradient(to right, ${completionColor} ${completionPercentage}%, transparent ${completionPercentage}%)`;  // update the gradient
+        firstPromptItem.style.background = `linear-gradient(to right, ${completionColor} ${completionPercentage}%, transparent ${completionPercentage}%)`;
         firstPromptItem.querySelector('.audio-item-text').style.textShadow = '1px 3px 6px black';
         firstPromptItem.setAttribute('completed-segments', completedSegments.toString());
     }
@@ -90,12 +89,12 @@ $(document).ready(function() {
         var formData = new FormData(this);
         var submitButton = $('#submit');
 
-        submitButton.addClass('loading');  // add the loading class to the submit button
+        submitButton.addClass('loading');
         addPromptToQueue(formData)
 
         $.ajax({
             type: 'POST',
-            url: '/',  // the endpoint where the form data should be POSTed
+            url: '/',
             data: formData,
             contentType: false,
             processData: false,
@@ -104,7 +103,7 @@ $(document).ready(function() {
             console.error('Error:', errorThrown);
         })
         .always(function() {
-            submitButton.removeClass('loading');  // remove the loading class from the submit button
+            submitButton.removeClass('loading');
         });
     });
 });
@@ -120,7 +119,6 @@ async function loadInitialAudioList() {
         // Clear the existing audio list
         audioListDiv.innerHTML = '<div class="audio-padding"></div>';
 
-        // Create a new audio list
         for (const file of audioFiles) {
             appendNewAudioFile(file, audioListDiv, false);
         }
@@ -158,7 +156,6 @@ function appendNewAudioFile(file, audioListDiv = null, prepend = true) {
     audio.appendChild(source);
     audioItemDiv.appendChild(audio);
 
-    // Get the first audio-item in the list
     const firstAudioItem = audioListDiv.querySelector('.audio-item');
     
     // If there's an audio item, insert the new one before it.
@@ -186,12 +183,9 @@ function addPromptToQueue(formData) {
     for (let [key, value] of formData.entries()) {
         // Append all parameters as attributes
         promptItemDiv.setAttribute(`data-${key}`, value);
-
-        // Create a new line only for 'text' form entry
         if (key === 'text') {
             const formEntry = document.createElement('p');
             formEntry.textContent = `${value}`;
-            // Append form entry to text div
             promptItemTextDiv.appendChild(formEntry);
         }
     }
@@ -206,5 +200,4 @@ function addPromptToQueue(formData) {
     promptListDiv.appendChild(promptItemDiv);
 }
 
-// Call the function when the page loads
 loadInitialAudioList();
