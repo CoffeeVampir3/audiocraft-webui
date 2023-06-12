@@ -20,6 +20,22 @@ document.getElementById("text").addEventListener("keydown", function(e) {
     }
 });
 
+var socket = io.connect('http://localhost:5000');  // replace with your server address
+socket.on('new_file', function(data) {
+    var output_filename = data.output_filename;
+    var new_file = {
+        text: output_filename,
+        audio_file: output_filename
+    };
+    appendNewAudioFile(new_file);
+
+    const promptListDiv = document.querySelector('.prompt-queue');
+    const firstPromptItem = promptListDiv.querySelector('.audio-item');
+    if (firstPromptItem) {
+        promptListDiv.removeChild(firstPromptItem);
+    }
+});
+
 $(document).ready(function() {
     function toggleMelodyField() {
         let model = $("#model").val();
@@ -31,7 +47,6 @@ $(document).ready(function() {
             $("#melody-field").hide();
         }
     }
-
 
     toggleMelodyField();
 
@@ -45,6 +60,7 @@ $(document).ready(function() {
         var submitButton = $('#submit');
 
         submitButton.addClass('loading');  // add the loading class to the submit button
+        addPromptToQueue(formData.get('text'))
 
         $.ajax({
             type: 'POST',
@@ -52,10 +68,6 @@ $(document).ready(function() {
             data: formData,
             contentType: false,
             processData: false,
-        })
-        .done(function(response) {
-            console.log(response);
-            appendNewAudioFile(response);
         })
         .fail(function(jqXHR, textStatus, errorThrown) {
             console.error('Error:', errorThrown);
@@ -125,6 +137,20 @@ function appendNewAudioFile(file, audioListDiv = null, prepend = true) {
     } else {
         audioListDiv.appendChild(audioItemDiv);
     }
+}
+
+function addPromptToQueue(prompt) {
+    const promptListDiv = document.querySelector('.prompt-queue');
+    const promptItemDiv = document.createElement('div');
+    promptItemDiv.className = 'audio-item';
+
+    const promptItemTextDiv = document.createElement('div');
+    promptItemTextDiv.className = 'audio-item-text';
+    console.log(prompt)
+    promptItemTextDiv.textContent = prompt;
+    promptItemDiv.appendChild(promptItemTextDiv);
+
+    promptListDiv.appendChild(promptItemDiv);
 }
 
 // Call the function when the page loads

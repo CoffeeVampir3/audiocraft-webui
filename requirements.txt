@@ -7,3 +7,5 @@ audiocraft
 librosa
 soundfile
 audioread
+flask_socketio
+torchaudio

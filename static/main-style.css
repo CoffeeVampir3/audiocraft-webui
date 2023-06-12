@@ -51,23 +51,17 @@ textarea {
 }
 
 .container {
-    width: 90%; 
-    background-color: var(--hamster);
-    padding: 3em;
-    border-radius: 1em;
-    box-shadow: 0px 1px 3px var(--weasel);
-    transition: all 0.3s ease;
     display: flex;
     justify-content: space-between;
-    max-height: 95vh;
+    padding: 10px;
 }
 
 form {
-    width: 100%; 
+    flex-basis: 20%;
+    padding-left: 20px;
 }
 
-#advanced-settings,
-.audio-list {
+.third-box {
     box-sizing: border-box; 
     padding: 1em;
     border: 1px solid var(--border-color);
@@ -76,26 +70,29 @@ form {
     background-color: var(--kitten);
 }
 
-#advanced-settings {
-    width: 60%;
-    flex: 1;
-    padding-top: 40px;
-}
-
 .audio-padding {
     height: 20px;
 }
 
-.audio-list {
-    width: 70%; 
-    max-height: 70vh;
-    height: 70vh;
+.prompt-queue {
+    flex-basis: 30%;
     overflow-y: auto;
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-left: -300px;
+}
+
+.audio-list {
+    flex-basis: 30%;
+    max-height: 95vh;
+    height:90%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-right: 20px;
 }
 
 @keyframes fadeIn {
