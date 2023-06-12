@@ -38,3 +38,6 @@ The UI is in desperate need of an actual UI design if anyone wants to take on th
 - **Temperature**: Also a sort of creativity guide, your outputs will be terrible if this is too high.
 - **Segments**: Number of segments to generate. Each segment will be (duration-overlap) long, so if duration is 30 seconds and overlap is 5 seconds, with 3 segments, you will get 75 seconds of audio out.
 - **Overlap**: The overlap for the segment, as explained above. More overlap = more consistent music between segments.
+
+## Known Issues:
+Currently the completion cannot factor in segments so the progress bar will be incorrect if you're using segments right now. Working on it.
