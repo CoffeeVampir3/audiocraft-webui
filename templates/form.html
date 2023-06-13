@@ -15,9 +15,19 @@
                 <div class="group model-melody">
                     <div id="melody-field" class="field">
                         <label>{{ form.melody.label }}</label>
-                        <input type="file" id="melody" name="melody" accept="audio/*">
+                        <input type="file" id="melody" name="melody" accept="audio/*" onchange="loadPreviewFile(event)">
                         <audio id="audio-preview" controls></audio>
                     </div>
+                    <script>
+                        var loadPreviewFile = function(event) {
+                            var output = document.getElementById('audio-preview');
+                            output.src = URL.createObjectURL(event.target.files[0]);
+                            output.onloadeddata = function() {
+                                URL.revokeObjectURL(output.src) // free
+                            }
+                        };
+                    </script>
+
                     <div class="field">
                         <label>{{ form.model.label }}</label>
                         {{ form.model(id="model") }}
