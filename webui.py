@@ -4,7 +4,7 @@ from wtforms.validators import DataRequired, NumberRange
 from flask_socketio import SocketIO, emit
 from scipy.io import wavfile
 import numpy as np
-import os, re, json, sys, queue, threading, uuid
+import os, re, json, sys, queue, threading, uuid, logging
 import torch, torchaudio, pathlib
 from audiocraft.models import MusicGen
 from operator import itemgetter
@@ -16,6 +16,14 @@ app = Flask(__name__)
 unload = False
 socketio = SocketIO(app, cors_allowed_origins="*")
 pending_queue = queue.Queue()
+
+import logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
+logging.getLogger().setLevel(logging.ERROR)
+logging.getLogger('socketio').setLevel(logging.ERROR)
+logging.getLogger('engineio').setLevel(logging.ERROR)
 
 def worker_process_queue():
     while True:
