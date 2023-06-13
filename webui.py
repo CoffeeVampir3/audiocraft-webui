@@ -16,6 +16,7 @@ from flask_bootstrap import Bootstrap5
 app = Flask(__name__)
 unload = False
 bootstrap = Bootstrap5(app)
+app.config['BOOTSTRAP_BOOTSWATCH_THEME'] = 'slate'
 socketio = SocketIO(app, cors_allowed_origins="*")
 pending_queue = queue.Queue()
 
@@ -23,7 +24,7 @@ def worker_process_queue():
     while True:
         form, files = pending_queue.get()  # Get the files from the queue
         output = handle_submit(form, files)
-        socketio.emit('new_file', {'output_filename': os.path.basename(output)})
+        socketio.emit('new_file', {'output_filename': os.path.basename(output), 'timestamp': os.path.getmtime(output)})
         pending_queue.task_done()
 
 if len(sys.argv) > 1:
@@ -72,6 +73,7 @@ def handle_submit(form, files):
     
     extra_settings_parameters = {
         "unload": unload,
+        "id": form.id.data
     }
 
     if files and 'melody' in files and files['melody'].filename != '':
@@ -98,6 +100,7 @@ def handle_submit(form, files):
 
 class MusicForm(Form):
     text = TextAreaField('Input Text', [DataRequired()])
+    id = TextAreaField('Job Id', [DataRequired()])
     melody = FileField('Optional Melody')
     model = SelectField('Model', choices=[('melody', 'melody'), ('medium', 'medium'), ('small', 'small'), ('large', 'large')], default='large')
     duration = IntegerField('Duration', default=10, validators=[NumberRange(min=1, max=30)])

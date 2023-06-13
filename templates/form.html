@@ -16,9 +16,14 @@
         {{ bootstrap.load_css() }}
         <style>
             .audio-item:hover,
-            .audio-item.selected {
+            .audio-item.selected,
+            .queue-item:hover {
                 --bs-bg-opacity: 0.25;
                 background-color: rgba(var(--bs-secondary-rgb), var(--bs-bg-opacity)) !important;
+            }
+            .icon-btn {
+                pointer-events: all;
+                cursor: pointer;
             }
         </style>
     </head>
@@ -72,13 +77,13 @@
             <div class="row flex-grow-1 overflow-hidden">
                 <!-- Sidebar -->
                 <div class="col-2 p-2 mh-100 flex flex-column">
-                    <h3>Results</h3>
+                    <h3 class="ms-1">Results</h3>
                     <!-- Scrollable flex container hax -->
                     <div class="flex flex-column flex-items-stretch flex-1 overflow-auto" style="max-height: calc(100% - 50px)">
                         <div class="d-flex flex-column flex-items-stretch flex-grow-0 flex-shrink-0 gap-1">
                             <!-- Queue Item Template -->
-                            <div class="queue-item d-flex d-none flex-column flex-items-stretch rounded p-2 me-2 position-relative">
-                                <h6 class="queue-item__title">My Long File Name With Random Words And All That Nonsense.mp3</h6>
+                            <div class="queue-item d-flex d-none flex-column flex-items-stretch rounded p-1 me-2 position-relative">
+                                <h6 class="queue-item__title">My Long Queue Prompt With Random Words And All That Nonsense.mp3</h6>
                                 <div class="progress">
                                     <div class="progress-bar queue-item__progress-bar" role="progressbar"></div>
                                 </div>
@@ -86,13 +91,36 @@
                         </div>
                         <div class="d-flex flex-column flex-items-stretch flex-grow-0 flex-shrink-0 gap-1">
                             <!-- Audio Item Template -->
-                            <div class="audio-item d-flex d-none flex-column flex-items-stretch rounded p-2 me-2 position-relative">
-                                <h6 class="audio-item__title">My Long File Name With Random Words And All That Nonsense.mp3</h6>
-                                <div class="d-flex flex-row justify-content-between">
-                                    <span class="audio-item__timestamp text-muted">23/2/22 at 3:23pm</span>
-                                    <span class="audio-item__duration text-muted">00:32</span>
+                            <div class="audio-item d-none d-flex justify-content-between rounded p-1 me-2 position-relative">
+                                <div class="d-flex flex-column flex-items-stretch">
+                                    <h6>
+                                        <span class="audio-item__title">My Long File Name With Random Words And All That Nonsense.mp3</span>
+                                        <span class="audio-item__newtag badge bg-success">New</span>
+                                    </h6>
+                                    <div class="d-flex flex-row justify-content-between">
+                                        <span class="audio-item__timestamp text-muted">23/2/22 at 3:23pm</span>
+                                        <span class="audio-item__duration text-muted">00:32</span>
+                                    </div>
+                                    <div class="playback audio-item__seek d-flex flex-column align-items-center">
+                                        <input
+                                            class="form-range flex-grow-1"
+                                            type="range"
+                                            id="seek"
+                                            name="seek"
+                                            min="0"
+                                            max="0"
+                                            value="0"
+                                            step="0.1"
+                                        />
+                                        <label class=""></label>
+                                    </div>
                                 </div>
-                                <a href="javascript:void(0);" class="stretched-link"></a>
+                                <div>
+                                    <span class="play-btn icon-btn">{{ render_icon('play-fill', '2em') }}</span>
+                                    <span class="pause-btn icon-btn">{{ render_icon('pause-fill', '2em') }}</span>
+                                    <span class="restart-btn icon-btn">{{ render_icon('arrow-counterclockwise', '2em') }}</span>
+                                    <span class="error-btn text-warning"> {{ render_icon('exclamation-triangle-fill', '2em') }} </span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -117,7 +145,7 @@
                                 placeholder="Enter a prompt..."
                                 class="grow form-control"
                             ></textarea>
-                            <input id="prompt-submit" name="submit" type="submit" value="Submit" class="btn btn-outline-primary" />
+                            <button id="prompt-submit" name="submit" value="Submit" class="btn btn-outline-primary">Submit</button>
                         </div>
                         <!-- Card Exterior Label -->
                         <div class="d-flex flex-column align-items-center mt-2">
@@ -166,44 +194,7 @@
                     </form>
                 </div>
             </div>
-            <!-- Bottom Bar -->
-            <div class="row flex-shrink-0 bg-light">
-                <div class="col py-2 d-flex justify-content-center">
-                    <!-- Playback Controls -->
-                    <div class="playback mw-100 flex-grow-1 d-flex justify-content-between align-items-center gap-3">
-                        <!-- Left -->
-                        <div class="d-flex justify-content-end" style="width: 45%">
-                            <audio class="d-none"></audio>
-                            <h5 class="playback__title text-truncate"></h5>
-                        </div>
-                        <!-- Center -->
-                        <div class="d-flex justify-content-center" style="width: 10%">
-                            <button class="playback__play-btn btn">{{ render_icon('play-fill', '2em') }}</button>
-                            <button class="playback__pause-btn btn">{{ render_icon('pause-fill', '2em') }}</button>
-                            <button class="playback__restart-btn btn">{{ render_icon('arrow-counterclockwise', '2em') }}</button>
-                            <button class="playback__error-btn btn text-warning">
-                                {{ render_icon('exclamation-triangle-fill', '2em') }}
-                            </button>
-                        </div>
-                        <!-- Right -->
-                        <div class="d-flex" style="width: 40%">
-                            <div class="playback__time d-flex flex-column align-items-center">
-                                <input
-                                    class="playback__seek form-range flex-grow-1"
-                                    type="range"
-                                    id="seek"
-                                    name="seek"
-                                    min="0"
-                                    max="0"
-                                    value="0"
-                                    step="0.1"
-                                />
-                                <label class=""></label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <audio id="playback"></audio>
         </div>
     </body>
     {{ bootstrap.load_js() }}

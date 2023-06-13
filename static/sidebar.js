@@ -12,7 +12,11 @@ const queueItems = [];
 const finishedQueue = [];
 
 function handleQueueProgress(progress) {
-    if(finishedQueue.findIndex(fin => fin.id === progress.id) !== -1) {
+    if (progress.id == null) {
+        //invalid
+        return;
+    }
+    if (finishedQueue.findIndex((fin) => fin.id === progress.id) !== -1) {
         return; //ignore
     }
     const existingIdx = queueItems.findIndex((item) => item.id === progress.id);
@@ -35,46 +39,64 @@ function handleQueueProgress(progress) {
     updateQueueItemDom(queueItem);
 }
 
+function removeQueueItem(id, { finish = false } = {}) {
+    const elementId = 'queue-item-' + id;
+    const el = document.getElementById(elementId);
+    if (el != null) {
+        el.remove();
+    }
+    const itemIdx = queueItems.findIndex((arrItem) => arrItem.id === id);
+    if (finish && itemIdx !== -1) {
+        finishedQueue.push(...queueItems.splice(itemIdx, 1));
+    }
+}
+
 function updateQueueItemDom(queueItem) {
-    const id = 'queue-item-' + queueItem.id;
-    const progress =
+    const elementId = 'queue-item-' + queueItem.id;
+    let progress =
         ((queueItem.segments_completed * queueItem.tokens_to_generate + queueItem.generated_tokens) /
             (queueItem.segments * queueItem.tokens_to_generate)) *
         100;
+    if (Number.isNaN(progress)) {
+        progress = 0;
+    }
 
     if (progress >= 100) {
-        const el = document.getElementById(id);
-        if (el != null) {
-            el.remove();
-        }
-        const itemIdx = queueItems.findIndex((arrItem) => arrItem.id === queueItem.id);
-        if (itemIdx !== -1) {
-            finishedQueue.push(...queueItems.splice(itemIdx, 1));
-        }
+        removeQueueItem(queueItem.id, { finish: true });
         return;
     }
 
-    const findOrCreate = findOrCreateTemplateInstance('#' + id, '.queue-item', ['.queue-item__title', '.queue-item__progress-bar']);
+    const findOrCreate = findOrCreateTemplateInstance('#' + elementId, '.queue-item', ['.queue-item__title', '.queue-item__progress-bar']);
     findOrCreate(({ root, selectedElements: [title, progressBar] }) => {
-        root.id = id;
+        root.id = elementId;
         progressBar.style.width = progress + '%';
         title.innerText = queueItem.prompt;
     });
 }
 
 function getAudioItemTemplate() {
-    return loadTemplate('.audio-item', ['.audio-item__title', '.audio-item__timestamp', '.audio-item__duration'], true);
+    return loadTemplate(
+        '.audio-item',
+        ['.audio-item__title', '.audio-item__timestamp', '.audio-item__duration', '.audio-item__newtag'],
+        true
+    );
 }
 
-function createAudioItemDom(file, { append = true } = {}) {
+function createAudioItemDom(file, { append = true, isNew = false } = {}) {
     const template = getAudioItemTemplate();
     template?.create(
-        ({ root, selectedElements: [title, timestamp, duration] }) => {
+        ({ root, selectedElements: [title, timestamp, duration, newtag] }) => {
+            root.id = 'audio-item-' + title;
             $(root).data('file', file);
+            toggleElementDisplay(newtag, isNew);
+
             //bind display values
             title.innerText = file.text;
-            const dt = new Date(0);
-            dt.setUTCSeconds(file.timestamp);
+            let dt = new Date();
+            if(file.timestamp) {
+                dt = new Date(0);
+                dt.setUTCSeconds(file.timestamp);
+            }
             timestamp.innerText =
                 dt.toLocaleDateString('en-us', { month: 'short', day: 'numeric' }) + ' at ' + dt.toLocaleTimeString('en-US');
             if (file.duration != null) {
@@ -82,24 +104,28 @@ function createAudioItemDom(file, { append = true } = {}) {
             } else {
                 toggleElementDisplay(duration, false);
             }
-            //handlers
-            root.addEventListener('click', function (event) {
-                event.preventDefault();
-                selectAudioFile(file);
 
-                //update selected class for all file items
-                document.querySelectorAll('.audio-item:not(.d-none)').forEach((el) => {
-                    el.classList.toggle('selected', $(el).data('file')?.audio_file === selectedAudioFile?.audio_file);
-                });
-            });
+            //create playback
+            const playback = preparePlayback(
+                root,
+                '/static/audio/' + file.audio_file,
+                () => {
+                    toggleElementDisplay(newtag, false);
+                    root.classList.toggle('selected', true);
+                },
+                () => {
+                    root.classList.toggle('selected', false);
+                }
+            );
+            $(root).data('playback', playback);
         },
         { append }
     );
 }
 
-function addNewAudioItem(file, { append = false } = {}) {
+function addNewAudioItem(file, { append = false, isNew = false } = {}) {
     audioItems.push(file);
-    createAudioItemDom(file, { append });
+    createAudioItemDom(file, { append, isNew });
 }
 
 function rebuildSidebarDom() {
@@ -108,7 +134,7 @@ function rebuildSidebarDom() {
 
     audioItems.sort((a, b) => b.timestamp - a.timestamp);
     for (const audioItem of audioItems) {
-        createAudioItemDom(audioItem);
+        createAudioItemDom(audioItem, false);
     }
 
     for (const queueItem of queueItems) {

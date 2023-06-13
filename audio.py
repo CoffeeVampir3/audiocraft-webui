@@ -68,7 +68,7 @@ def predict(socketio, model, prompt, model_parameters, melody_parameters, extens
             return None
         return predict(socketio, model, prompt, model_parameters, melody_parameters, extension_parameters, extra_settings_parameters)
 
-    MODEL.set_ui_generation_params(''.join(random.choice(string.ascii_lowercase) for i in range(10)), prompt)
+    MODEL.set_ui_generation_params(extra_settings_parameters['id'], prompt)
     MODEL.set_generation_params(
         use_sampling=True,
         **model_parameters,

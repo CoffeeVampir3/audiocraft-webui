@@ -6,7 +6,7 @@ socket.on('new_file', function (data) {
         text: output_filename,
         audio_file: output_filename,
     };
-    addNewAudioItem(new_file, { append: false });
+    addNewAudioItem(new_file, { append: false, isNew: true });
 });
 
 socket.on('progress', function (data) {
@@ -35,7 +35,7 @@ $(document).ready(function () {
     document.getElementById('remove-melody')?.addEventListener('click', function (e) {
         e.preventDefault();
         const input = document.getElementById('melody');
-        if(input != null) {
+        if (input != null) {
             input.value = '';
         }
         onMelodyPicked(undefined);
@@ -70,7 +70,7 @@ $(document).ready(function () {
         if (e.keyCode === 13) {
             // checks whether the pressed key is "Enter"
             e.preventDefault(); // prevent the default action (i.e., inserting a new line)
-            document.getElementById('prompt-submit').click(); // trigger the submit button click event
+            document.getElementById('prompt-submit')?.click(); // trigger the submit button click event
         }
     });
 
@@ -79,12 +79,13 @@ $(document).ready(function () {
 
         // serialize form data
         const formData = new FormData(this);
-        const submitButton = $('#prompt-submit');
+        formData.append('id', (Math.random() + 1).toString(16).substring(2, 12)); //assign random id
+        const submitButton = document.getElementById('prompt-submit');
 
-        submitButton.addClass('loading');
+        submitButton.innerHTML = `<div class="spinner-border spinner-border-sm" role="status">
+                                        <span class="sr-only visually-hidden">Loading...</span>
+                                    </div>`;
 
-        //todo -- get queue job id and prompt from success api response to put in queue 
-        // (since our queue is not parallelized atm, we can't wait for a socket progress event to add to the queue)
         $.ajax({
             type: 'POST',
             url: '/',
@@ -92,11 +93,16 @@ $(document).ready(function () {
             contentType: false,
             processData: false,
         })
+            .then(() => {
+                handleQueueProgress({ segments: formData.get('segments'), id: formData.get('id'), prompt: formData.get('text') });
+                document.getElementById('prompt-input').value = '';
+            })
             .fail(function (jqXHR, textStatus, errorThrown) {
                 console.error('Error:', errorThrown);
+                removeQueueItem(formData.get('id'), { finish: false });
             })
             .always(function () {
-                submitButton.removeClass('loading');
+                submitButton.innerHTML = 'Submit';
             });
     });
 

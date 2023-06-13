@@ -1,3 +1,15 @@
+//currently these two elements simply check for or toggle d-none class
+//if anyone prefers something else, feel free to replace
+function isElementDisplayed(el) {
+    if (typeof el === 'string') {
+        el = document.querySelector(el);
+    }
+    if (el == null) {
+        console.warn('Could not find element ' + el + ' .');
+        return;
+    }
+    return !el.classList.contains('d-none');
+}
 function toggleElementDisplay(el, display) {
     if (typeof el === 'string') {
         el = document.querySelector(el);
@@ -23,7 +35,7 @@ function loadTemplate(rootSelector, selectors = [], strict = false) {
     const selectedElements = selectors.map((selector) => root.querySelector(selector));
     if (strict && selectedElements.some((el) => el == null)) {
         const failed = selectedElements
-            .forEach((item, index) => (item == null ? selectors[index] : undefined))
+            .map((item, index) => (item == null ? selectors[index] : undefined))
             .filter((item) => item != null);
         console.error(`Template could not fulfill selector queries: ${failed.join(' , ')}. Check your html.`);
         return undefined;
@@ -39,7 +51,6 @@ function loadTemplate(rootSelector, selectors = [], strict = false) {
         } else {
             parent.prepend(clone);
         }
-        parent.append(clone);
         if (onCreate != null) {
             onCreate({ root: clone, selectedElements });
         }
