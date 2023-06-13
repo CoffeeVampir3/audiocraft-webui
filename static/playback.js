@@ -41,7 +41,6 @@ $(document).ready(function () {
 //handlers
 
 function onTimeupdate(event) {
-    console.log(event);
     if(Number.isNaN(event.target.duraton) || Number.isNaN(event.target.currentTime)) {
         updatePlayback({time: null});
     } else {

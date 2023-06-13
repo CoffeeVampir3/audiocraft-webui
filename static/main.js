@@ -10,7 +10,7 @@ socket.on('new_file', function (data) {
 });
 
 socket.on('progress', function (data) {
-    handleQueueProgress(progress);
+    handleQueueProgress(data);
 });
 
 $(document).ready(function () {
