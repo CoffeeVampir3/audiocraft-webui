@@ -17,11 +17,8 @@ unload = False
 socketio = SocketIO(app, cors_allowed_origins="*")
 pending_queue = queue.Queue()
 
-import logging
-log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
-
 logging.getLogger().setLevel(logging.ERROR)
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
 logging.getLogger('socketio').setLevel(logging.ERROR)
 logging.getLogger('engineio').setLevel(logging.ERROR)
 
