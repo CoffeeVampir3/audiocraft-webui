@@ -4,7 +4,7 @@ from wtforms.validators import DataRequired, NumberRange
 from flask_socketio import SocketIO, emit
 from scipy.io import wavfile
 import numpy as np
-import os, re, json, sys, queue, threading
+import os, re, json, sys, queue, threading, uuid
 import torch, torchaudio, pathlib
 from audiocraft.models import MusicGen
 from operator import itemgetter
@@ -76,15 +76,14 @@ def handle_submit(form, files):
         "id": form.id.data
     }
 
-    if files and 'melody' in files and files['melody'].filename != '':
+    if files and 'melody' in files and files['melody']:
         if form.model.data != 'melody':
             pass
         else:
-            melody_file = request.files['melody']
-            extension = os.path.splitext(melody_file.filename)[1]
+            extension = os.path.splitext(files['melody'])[1]
             if extension.lower() in ['.wav', '.mp3']:
-                melody_parameters['melody'], melody_parameters['sample_rate'] = librosa.load(melody_file, sr=None)
-                print(f"Using melody file: {melody_file}")
+                melody_parameters['melody'], melody_parameters['sample_rate'] = librosa.load(files['melody'], sr=None)
+                print(f"Using melody file: {files['melody']}")
             else:
                 print(f"Unsupported file extension: {extension}")
 
@@ -126,8 +125,12 @@ def home_and_submit():
     if request.method == 'POST' and form.validate():
         files = None
         if 'melody' in request.files and request.files['melody'].filename != '':
-            files = request.files['melody']
-        pending_queue.put((form, files))  # Pass the files to the thread
+            melody_file = request.files['melody']
+            extension = os.path.splitext(melody_file.filename)[1]
+            temp_filename = f"/tmp/{uuid.uuid4()}{extension}"
+            melody_file.save(temp_filename)
+            files = {'melody': temp_filename}
+        pending_queue.put((form, files))
         return redirect(url_for('home_and_submit'))
         
     audio_dir = pathlib.Path('static/audio')
