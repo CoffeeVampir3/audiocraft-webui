@@ -11,6 +11,7 @@ from operator import itemgetter
 import librosa
 import soundfile as sf
 from audio import predict
+from audiocraft.data.audio import audio_write
 
 app = Flask(__name__)
 unload = False
@@ -38,7 +39,7 @@ def sanitize_filename(filename):
     """
     return re.sub(r'[^\w\d-]', ' ', filename)
 
-def save_output(output, text):
+def save_output(output, sample_rate, text):
     """
     Save output to a WAV file with the filename based on the input text.
     If a file with the same name already exists, append a number in parentheses.
@@ -50,7 +51,11 @@ def save_output(output, text):
         output_filename = f"{base_filename.rsplit('.', 1)[0]}({i}).wav"
         i += 1
 
-    wavfile.write(output_filename, output[0], np.array(output[1], dtype=np.float32))
+    print(output.squeeze())
+    #wavfile.write(output_filename, output[0], np.array(output[1], dtype=np.float32))
+    audio_write(
+        output_filename, output.squeeze(), sample_rate, strategy="loudness",
+        loudness_headroom_db=16, loudness_compressor=True, add_suffix=False)
     return output_filename
         
 def handle_submit(form, files):
@@ -88,10 +93,10 @@ def handle_submit(form, files):
     for name, value in {**model_parameters, **extension_parameters}.items():
         print(f"{name}: {value}")
 
-    output = predict(socketio, model, prompt, model_parameters, melody_parameters, extension_parameters, extra_settings_parameters)
-    if output is None:
+    sample_rate, output_tensors = predict(socketio, model, prompt, model_parameters, melody_parameters, extension_parameters, extra_settings_parameters)
+    if output_tensors is None:
         return None
-    output_filename = save_output(output, prompt)
+    output_filename = save_output(output_tensors, sample_rate, prompt)
 
     return output_filename
 

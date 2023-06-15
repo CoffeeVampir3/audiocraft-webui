@@ -52,7 +52,7 @@ def extend_audio(model, prompt_waveform, prompt, prompt_sr, segments=5, overlap=
 
         prompt_waveform = torch.cat([prompt_waveform, new_audio], dim=2)
 
-    return prompt_waveform.detach().cpu().numpy()
+    return prompt_waveform
 
 def predict(socketio, model, prompt, model_parameters, melody_parameters, extension_parameters, extra_settings_parameters):
     global MODEL
@@ -86,9 +86,9 @@ def predict(socketio, model, prompt, model_parameters, melody_parameters, extens
     sample_rate = MODEL.sample_rate
     
     if extension_parameters['segments'] > 1:
-        output_tensors = extend_audio(MODEL, output, prompt, sample_rate, **extension_parameters)
+        output_tensors = extend_audio(MODEL, output, prompt, sample_rate, **extension_parameters).detach().cpu().float()
     else:
-        output_tensors = output.detach().cpu().numpy()
+        output_tensors = output.detach().cpu().float()
     
     if extra_settings_parameters['unload']:
         del output

@@ -21,24 +21,7 @@ class HijackedMusicGen(MusicGen):
     def get_pretrained(socketio, name: str = 'melody', device='cuda'):
         music_gen = MusicGen.get_pretrained(name, device)
         return HijackedMusicGen(socketio, music_gen.name, music_gen.compression_model, music_gen.lm)
-
-    def _generate_tokens(self, attributes: tp.List[ConditioningAttributes],
-                         prompt_tokens: tp.Optional[torch.Tensor], progress: bool = False) -> torch.Tensor:
-
-        if prompt_tokens is not None:
-            assert self.generation_params['max_gen_len'] > prompt_tokens.shape[-1], \
-                "Prompt is longer than audio to generate"
-
-        # generate by sampling from LM
-        with self.autocast:
-            gen_tokens = self.lm.generate(prompt_tokens, attributes, callback=self._progress_callback, **self.generation_params)
-
-        # generate audio
-        assert gen_tokens.dim() == 3
-        with torch.no_grad():
-            gen_audio = self.compression_model.decode(gen_tokens, None)
-        return gen_audio
-
+    
     @property
     def progress_callback(self):
         raise Exception("Progress callback is write-only")
