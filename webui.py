@@ -18,9 +18,8 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 pending_queue = queue.Queue()
 
 logging.getLogger().setLevel(logging.ERROR)
-logging.getLogger('werkzeug').setLevel(logging.ERROR)
-logging.getLogger('socketio').setLevel(logging.ERROR)
 logging.getLogger('engineio').setLevel(logging.ERROR)
+logging.getLogger('socketio').setLevel(logging.ERROR)
 
 def worker_process_queue():
     while True:
