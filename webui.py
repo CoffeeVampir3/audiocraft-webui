@@ -39,19 +39,30 @@ def sanitize_filename(filename):
     """
     return re.sub(r'[^\w\d-]', ' ', filename)
 
+
 def save_output(output, sample_rate, text):
     """
     Save output to a WAV file with the filename based on the input text.
     If a file with the same name already exists, append a number in parentheses.
     """
     i = 1
-    base_filename = f"static/audio/{sanitize_filename(text)}.wav"
-    output_filename = base_filename
+    base_filename = f"static/audio/{sanitize_filename(text)}"
+    output_filename = f"{base_filename}.wav"
+    
+    # Convert to absolute path
+    absolute_path = os.path.abspath(output_filename)
+    
+    # Check if the absolute path is too long
+    max_length = 255  # Maximum path length for most file systems
+    if len(absolute_path) > max_length:
+        # If the path is too long, truncate the filename
+        base_filename = base_filename[:max_length - len(os.path.abspath(f"static/audio/")) - 10]  # Reserve space for extension and potential index
+        output_filename = f"{base_filename}.wav"
+    
     while os.path.exists(output_filename):
-        output_filename = f"{base_filename.rsplit('.', 1)[0]}({i}).wav"
+        output_filename = f"{base_filename}({i}).wav"
         i += 1
-
-    print(output.squeeze())
+        
     audio_write(
         output_filename, output.squeeze(), sample_rate, strategy="loudness",
         loudness_headroom_db=16, loudness_compressor=True, add_suffix=False)
