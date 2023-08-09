@@ -1,12 +1,8 @@
 flask
 wtforms
-scipy
 numpy
 torch
 git+https://git@github.com/facebookresearch/audiocraft#egg=audiocraft
-librosa
-soundfile
-audioread
 flask_socketio
 torchaudio
 ffmpeg

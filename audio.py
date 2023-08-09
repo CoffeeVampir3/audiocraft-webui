@@ -1,10 +1,7 @@
-from scipy.io import wavfile
 import numpy as np
 import os, re, json, sys
 import torch, torchaudio, pathlib
 from operator import itemgetter
-import librosa
-import soundfile as sf
 from generator import HijackedMusicGen
 
 MODEL = None
@@ -23,11 +20,7 @@ def load_model(version, socketio):
 
 def load_and_process_audio(model, melody, sample_rate):
     if melody is not None:
-        melody = torch.from_numpy(melody).to(model.device).float().t().unsqueeze(0)
-        if melody.dim() == 2:
-            melody = melody[None]
-        melody = melody[..., :int(sample_rate * model.lm.cfg.dataset.segment_duration)]
-        return melody
+        return melody[None]
     else:
         return None
 
@@ -64,7 +57,6 @@ def predict(socketio, model, prompt, model_parameters, melody_parameters, extens
         MODEL = load_model(model, socketio)
         if MODEL is None:
             return None
-        return predict(socketio, model, prompt, model_parameters, melody_parameters, extension_parameters, extra_settings_parameters)
 
     MODEL.set_generation_params(
         use_sampling=True,
@@ -78,7 +70,7 @@ def predict(socketio, model, prompt, model_parameters, melody_parameters, extens
             descriptions=[prompt],
             melody_wavs=melody,
             melody_sample_rate=melody_parameters['sample_rate'],
-            progress=False
+            progress=True
         )
     else:
         output = MODEL.generate(descriptions=[prompt], progress=True)

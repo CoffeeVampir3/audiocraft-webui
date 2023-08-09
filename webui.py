@@ -2,14 +2,11 @@ from flask import Flask, render_template, request,jsonify, redirect, url_for
 from wtforms import Form, TextAreaField, FileField, SelectField, IntegerField, FloatField, SubmitField
 from wtforms.validators import DataRequired, NumberRange
 from flask_socketio import SocketIO, emit
-from scipy.io import wavfile
 import numpy as np
 import os, re, json, sys, queue, threading, uuid, logging
 import torch, torchaudio, pathlib
 from audiocraft.models import MusicGen
 from operator import itemgetter
-import librosa
-import soundfile as sf
 from audio import predict
 from audiocraft.data.audio import audio_write
 
@@ -96,7 +93,7 @@ def handle_submit(form, files):
         if form.model.data != 'melody':
             pass
         else:
-            melody_parameters['melody'], melody_parameters['sample_rate'] = librosa.load(temp_filename, sr=None)
+            melody_parameters['melody'], melody_parameters['sample_rate'] = torchaudio.load(temp_filename)
             print(f"Using melody file: {temp_filename}")
             os.remove(temp_filename)  # Delete the temporary file
 
