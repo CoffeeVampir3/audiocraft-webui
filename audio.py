@@ -4,6 +4,7 @@ import torch, torchaudio, pathlib
 from operator import itemgetter
 from generator import HijackedMusicGen
 
+global MODEL
 MODEL = None
 
 def load_model(version, socketio):
@@ -49,9 +50,13 @@ def extend_audio(model, prompt_waveform, prompt, prompt_sr, segments=5, overlap=
 
 def predict(socketio, model, prompt, model_parameters, melody_parameters, extension_parameters, extra_settings_parameters):
     global MODEL
-    if MODEL is None or MODEL.name != model:
-        if MODEL is not None:
+    if not MODEL or MODEL.name != f"facebook/musicgen-{model}":
+        if MODEL:
+            del output
+            import gc
             del MODEL
+            MODEL = None
+            gc.collect() 
             torch.cuda.empty_cache()
             torch.cuda.synchronize()
         MODEL = load_model(model, socketio)
@@ -81,6 +86,8 @@ def predict(socketio, model, prompt, model_parameters, melody_parameters, extens
         output_tensors = extend_audio(MODEL, output, prompt, sample_rate, **extension_parameters).detach().cpu().float()
     else:
         output_tensors = output.detach().cpu().float()
+        
+    print(output_tensors)
     
     if extra_settings_parameters['unload']:
         del output

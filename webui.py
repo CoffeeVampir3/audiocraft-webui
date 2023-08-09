@@ -115,7 +115,7 @@ class MusicForm(Form):
     topk = IntegerField('Top-k', default=0)
     topp = FloatField('Top-p', default=0)
     temperature = FloatField('Temperature', default=1.0)
-    cfg_coef = FloatField('Classifier Free Guidance', default=4.5)
+    cfg_coef = FloatField('Classifier Free Guidance', default=2.6)
     segments = IntegerField('Segments', default=1, validators=[NumberRange(min=1, max=10)])
     overlap = FloatField('Overlap', default=5.0) 
     submit = SubmitField('Submit')
