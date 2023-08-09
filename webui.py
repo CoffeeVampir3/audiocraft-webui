@@ -62,7 +62,7 @@ def save_output(output, sample_rate, text):
         
     audio_write(
         output_filename, output.squeeze(), sample_rate, strategy="loudness",
-        loudness_headroom_db=16, loudness_compressor=True, add_suffix=False)
+        loudness_compressor=True, add_suffix=False)
     return output_filename
         
 def handle_submit(form, files):
@@ -112,10 +112,10 @@ class MusicForm(Form):
     melody = FileField('Optional Melody')
     model = SelectField('Model', choices=[('melody', 'melody'), ('medium', 'medium'), ('small', 'small'), ('large', 'large')], default='large')
     duration = IntegerField('Duration', default=10, validators=[NumberRange(min=1, max=1000)])
-    topk = IntegerField('Top-k', default=0)
+    topk = IntegerField('Top-k', default=250)
     topp = FloatField('Top-p', default=0)
-    temperature = FloatField('Temperature', default=1.0)
-    cfg_coef = FloatField('Classifier Free Guidance', default=2.6)
+    temperature = FloatField('Temperature', default=1.05)
+    cfg_coef = FloatField('Classifier Free Guidance', default=4)
     segments = IntegerField('Segments', default=1, validators=[NumberRange(min=1, max=10)])
     overlap = FloatField('Overlap', default=5.0) 
     submit = SubmitField('Submit')
