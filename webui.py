@@ -62,7 +62,7 @@ def save_output(output, sample_rate, text):
         
     audio_write(
         output_filename, output.squeeze(), sample_rate, strategy="loudness",
-        loudness_compressor=True, add_suffix=False)
+        loudness_headroom_db=18, loudness_compressor=True, add_suffix=False)
     return output_filename
         
 def handle_submit(form, files):
