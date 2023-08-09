@@ -19,7 +19,8 @@ class HijackedMusicGen(MusicGen):
         
     @staticmethod
     def get_pretrained(socketio, name: str = 'melody', device='cuda'):
-        music_gen = MusicGen.get_pretrained(name, device)
+        patched_name = f"facebook/musicgen-{name}"
+        music_gen = MusicGen.get_pretrained(patched_name, device)
         return HijackedMusicGen(socketio, music_gen.name, music_gen.compression_model, music_gen.lm)
 
     @property
