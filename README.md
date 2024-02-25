@@ -37,6 +37,10 @@ The UI is in desperate need of an actual UI design if anyone wants to take on th
 - **Top-K**: Unclear how it affects generation, needs more testing.
 - **Top-P**: Same as above.
 - **Duration**: Length of generated music.
+- **Classifier Free Guidance**: Controls creativity, lower number = "more creative freedom" in theory at least.
+- **Temperature**: Also a sort of creativity guide, your outputs will be terrible if this is too high.
+- **Segments**: Number of segments to generate. Each segment will be (duration-overlap) long, so if duration is 30 seconds and overlap is 5 seconds, with 3 segments, you will get 75 seconds of audio out.
+- **Overlap**: The overlap for the segment, as explained above. More overlap = more consistent music between segments.
 
 ## Changelog:
 
@@ -45,7 +49,3 @@ The UI is in desperate need of an actual UI design if anyone wants to take on th
 - Added a history of generation parameters for generated music
 - Removed a bunch of garbage dependencies
 - Removed overlap and segments as they were antiquated parameters.
-- **Classifier Free Guidance**: Controls creativity, lower number = "more creative freedom" in theory at least.
-- **Temperature**: Also a sort of creativity guide, your outputs will be terrible if this is too high.
-- **Segments**: Number of segments to generate. Each segment will be (duration-overlap) long, so if duration is 30 seconds and overlap is 5 seconds, with 3 segments, you will get 75 seconds of audio out.
-- **Overlap**: The overlap for the segment, as explained above. More overlap = more consistent music between segments.
