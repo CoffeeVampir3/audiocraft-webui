@@ -1,6 +1,6 @@
 from flask_socketio import SocketIO, emit
 from flask import Flask, render_template, request, jsonify, send_from_directory
-import logging, os, queue, threading
+import logging, os, queue, threading, json
 import torchaudio
 from mechanisms.generator_backend import generate_audio
 
@@ -17,6 +17,31 @@ def worker_process_queue():
         filename, json_filename = generate_audio(socketio, model_type, prompt, slider_data, melody_data)
         socketio.emit('on_finish_audio', {"prompt":prompt, "filename":filename, "json_filename":json_filename})
         pending_queue.task_done()
+        
+def save_last_gen_settings(model_type, prompt, audio_gen_params):
+    os.makedirs("settings", exist_ok=True)
+    output_filename = "settings/last_run.json"
+    write_data = {"model":model_type, "prompt":prompt, "parameters":audio_gen_params}
+    
+    with open(output_filename, 'w') as outfile:
+        json.dump(write_data, outfile, indent=4)
+        
+def load_last_gen_settings():
+    input_filename = "settings/last_run.json"
+    if not os.path.exists(input_filename):
+        return None, None, None
+    
+    with open(input_filename, 'r') as infile:
+        settings = json.load(infile)
+        model = settings["model"]
+        prompt = settings["prompt"]
+        topp = settings["parameters"]["top_p"]
+        duration = settings["parameters"]["duration"]
+        cfg_coef = settings["parameters"]["cfg_coef"]
+        topk = settings["parameters"]["top_k"]
+        temperature = settings["parameters"]["temperature"]
+        return model, prompt, topp, duration, cfg_coef, topk, temperature
+    
     
 @socketio.on('submit_sliders')
 def handle_submit_sliders(json):
@@ -34,6 +59,7 @@ def handle_submit_sliders(json):
     if melody_url:
         melody_data = torchaudio.load(melody_url)
 
+    save_last_gen_settings(model_type, prompt, slider_data)
     socketio.emit('add_to_queue', {"prompt":prompt})
     pending_queue.put((model_type, prompt, slider_data, melody_data))
     
@@ -83,13 +109,31 @@ def upload_audio():
 
 @app.route('/')
 def index():
+    model, prompt, topk, duration, cfg_coef, topp, temperature = load_last_gen_settings()
+    if model is not None:
+        return render_template('index.html', 
+                               topk=topk, 
+                               duration=duration, 
+                               cfg_coef=cfg_coef, 
+                               topp=topp, 
+                               temperature=temperature, 
+                               default_model=model,
+                               default_text=prompt)
     topk = 250
     duration = 30
     cfg_coef = 4.0
     topp = .67
     temperature = 1.2
-    overlap = 3
-    return render_template('index.html', topk=topk, duration=duration, cfg_coef=cfg_coef, topp=topp, temperature=temperature, overlap=overlap)
+    default_model = "large"
+    default_text = ""
+    return render_template('index.html', 
+                           topk=topk, 
+                           duration=duration, 
+                           cfg_coef=cfg_coef, 
+                           topp=topp, 
+                           temperature=temperature, 
+                           default_model=default_model,
+                           default_text=default_text)
 
 if __name__ == '__main__':
     if not os.path.exists('static/audio'):

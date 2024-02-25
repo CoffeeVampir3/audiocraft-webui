@@ -36,11 +36,11 @@
         <div class="third-box">
 
             <select id="modelSelector" class="model-selector">
-                <option value="small">Small</option>
-                <option value="medium">Medium</option>
-                <option value="large">Large</option>
-                <option value="melody">Melody</option>
-            </select>
+                {% set model_options = ["small", "medium", "large", "melody"] %}
+                {% for option in model_options %}
+                    <option value="{{ option }}" {% if option == default_model %}selected{% endif %}>{{ option.capitalize() }}</option>
+                {% endfor %}
+            </select>            
 
             <div id="melody-field" class="field">
                 <input type="file" id="melody" name="melody" accept="audio/*">
@@ -108,7 +108,7 @@
             </div>
 
             <div class="submit-container">
-                <textarea id="text" name="text" rows="3" required=""></textarea>
+                <textarea id="text" name="text" rows="3" required="">{{ default_text }}</textarea>
                 <button type="button" class="submit-button" onclick="submitSliders()">Submit</button>
             </div>
         </div>

@@ -1,4 +1,5 @@
 /static/audio/
 /static/temp/
+/settings
 venv/
 __pycache__
