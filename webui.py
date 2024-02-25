@@ -1,5 +1,5 @@
 from flask_socketio import SocketIO, emit
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 import logging, os, queue, threading
 import torchaudio
 from mechanisms.generator_backend import generate_audio
@@ -37,6 +37,31 @@ def handle_submit_sliders(json):
     socketio.emit('add_to_queue', {"prompt":prompt})
     pending_queue.put((model_type, prompt, slider_data, melody_data))
     
+@socketio.on('connect')
+def handle_connect():
+    audio_json_pairs = get_audio_json_pairs("static/audio")
+    # Send the list of pairs to the connected client
+    socketio.emit('audio_json_pairs', audio_json_pairs)
+    
+def get_audio_json_pairs(directory):
+    files = os.listdir(directory)
+    wav_files = [f for f in files if f.endswith('.wav')]
+    json_files = [f for f in files if f.endswith('.json')]
+    
+    pairs = []
+    for wav_file in wav_files:
+        base_name = os.path.splitext(wav_file)[0]
+        json_file = f"{base_name}.json"
+        if json_file in json_files:
+            full_wav_path = os.path.join(directory, wav_file)
+            full_json_path = os.path.join(directory, json_file)
+            pairs.append((full_wav_path, full_json_path))
+            
+    for pair in pairs:
+        print(pair)
+    
+    return pairs
+    
 @app.route('/upload_melody', methods=['POST'])
 def upload_audio():
     dir = "static/temp"
@@ -72,4 +97,4 @@ if __name__ == '__main__':
     if not os.path.exists('static/temp'):
         os.makedirs('static/temp')
     threading.Thread(target=worker_process_queue, daemon=True).start()
-    socketio.run(app)
+    socketio.run(app, debug=True)

@@ -64,10 +64,10 @@ socket.on('on_finish_audio', function(data) {
         promptListDiv.removeChild(firstPromptItem);
     }
 
-    addAudioToList(data.prompt, data.filename, data.json_filename);
+    addAudioToList(data.filename, data.json_filename);
 });
 
-function addAudioToList(prompt, filename, json_filename) {
+function addAudioToList(filename, json_filename) {
     fetch(json_filename)
     .then(response => response.json())
     .then(json_data => {
@@ -130,4 +130,21 @@ socket.on('progress', function(data) {
         firstPromptItem.style.background = `linear-gradient(to right, ${completionColor} ${progress_value}%, transparent ${progress_value}%)`;
         firstPromptItem.querySelector('.audio-item-text').style.textShadow = '1px 3px 6px black';
     }
+});
+
+// INITIALIZE
+
+// Listen for the 'audio_json_pairs' event
+socket.on('audio_json_pairs', function(data) {
+    console.log('Received audio and JSON pairs:', data);
+    
+    // Process the received pairs here
+    // For example, display them on the webpage or perform other actions
+    data.forEach(pair => {
+        // Assuming 'pair' is an array with [wavFile, jsonFile]
+        const [wavFile, jsonFile] = pair;
+        console.log(`Audio File: ${wavFile}, JSON File: ${jsonFile}`);
+        
+        addAudioToList(wavFile, jsonFile)
+    });
 });
