@@ -1,6 +1,6 @@
 [![Discord](https://img.shields.io/discord/232596713892872193?logo=discord)](https://discord.gg/2JhHVh7CGu)
 
-# audiocraft-webui
+# audiocraft-webui v2.0!
 Local webui for Facebook's Audiocraft model: <https://github.com/facebookresearch/audiocraft>
 
 ![](https://github.com/CoffeeVampir3/audiocraft-webui/blob/1a1390e2842a7eaa8de376503abb51fbfad233ca/preview.png)
@@ -8,10 +8,8 @@ Local webui for Facebook's Audiocraft model: <https://github.com/facebookresearc
 ## Features:
 
 - **Long Audio**: Make audio as long as you like.
-- **Segmented audio**: Generate audio in segments (potentially faster than longer audio)
 - **Processing Queue**: Add as many different prompts to the processing queue as you like, go have a cup of coffee, come back to sweet sweet audio.
-
-- **Segmented Prompting**: *On the gradio version <https://github.com/CoffeeVampir3/audiocraft-webui/tree/gradio-version>* Use multiple different prompts per audio segment.
+- **Generation history**: Playback what you generated and see the settings used to get the gen.
 
 ## Install:
 
