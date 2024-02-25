@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Music Gen Webui 2.0</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='main-style.css') }}">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+
+</head>
+
+<body>
+    {% macro slider_field(id, name, min_value, max_value, step_value, data) %}
+    <div class="field">
+        <label for="{{ name }}">{{ name }}</label>
+        <input type="range" id="{{ id }}" name="{{ name }}" min="{{ min_value }}" max="{{ max_value }}" step="{{ step_value }}" value="{{ data }}" oninput="updateSliderValue('{{ id }}', this.value)">
+        <input type="text" id="{{ id }}-text" value="{{ data }}" class="slider-value" oninput="updateRangeValue('{{ id }}', this.value)">
+    </div>
+    <script>
+        function updateSliderValue(sliderName, value) {
+            document.getElementById(sliderName + '-text').value = value;
+            socket.emit('slider_change', {sliderName: sliderName, value: value});
+        }
+
+        function updateRangeValue(sliderName, value) {
+            var rangeInput = document.getElementById(sliderName);
+            var newValue = parseFloat(value);
+            if (!isNaN(newValue) && newValue >= parseFloat(rangeInput.min) && newValue <= parseFloat(rangeInput.max)) {
+                rangeInput.value = newValue;
+                socket.emit('slider_change', {sliderName: sliderName, value: newValue});
+            }
+        }
+    </script>
+    {% endmacro %}
+    <div class="container"></div>
+        <div class="third-box">
+
+            <select id="modelSelector" class="model-selector">
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+                <option value="melody">Melody</option>
+            </select>
+
+            <div id="melody-field" class="field">
+                <input type="file" id="melody" name="melody" accept="audio/*">
+                <audio id="audio-preview" controls></audio>
+            </div>
+
+            <script>
+                document.getElementById('melody').addEventListener('change', async function(event) {
+                    var files = event.target.files;
+                    if (files.length === 0) {
+                        audioElement.src = "";
+                        return;
+                    }
+                    var file = files[0];
+                    if (file.type.startsWith('audio/')) {
+                        var formData = new FormData();
+                        formData.append('melody', file);
+                    }
+                    try {
+                        const response = await fetch('/upload_melody', {
+                            method: 'POST',
+                            body: formData,
+                        });
+                        const data = await response.json();
+                        var audioElement = document.getElementById('audio-preview');
+                        audioElement.src = data.filePath;
+                    } catch(error) {
+                        audioElement.src = "";
+                    }
+                });
+            </script>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    var modelSelector = document.getElementById('modelSelector');
+                    var melodyField = document.getElementById('melody-field');
+                    var audioElement = document.getElementById('audio-preview');
+                    var fileInput = document.getElementById('melody');
+
+                    function updateUI() {
+                        fileInput.value = "";
+                        audioElement.src = "";
+                        if(modelSelector.value !== 'melody') {
+                            melodyField.style.display = 'none';
+                        } else {
+                            melodyField.style.display = 'block';
+                        }
+                    }
+                    modelSelector.addEventListener('change', updateUI);
+                    updateUI();
+                });
+            </script>
+    
+            <div class="group slider-group">
+                <div>
+                    {{ slider_field('top_k', 'Top K', 0, 1000, 1, topk) }}
+                    {{ slider_field('duration', 'Duration', 1, 1000, 1, duration) }}
+                    {{ slider_field('cfg_coef', 'CFG', 1, 10, 0.1, cfg_coef) }}
+                </div>
+
+                <div>
+                    {{ slider_field('top_p', 'Top-Probability', 0, 1, 0.01, topp) }}
+                    {{ slider_field('temperature', 'Temperature', 0.1, 5, 0.01, temperature) }}
+                </div>
+            </div>
+
+            <div class="submit-container">
+                <textarea id="text" name="text" rows="3" required=""></textarea>
+                <button type="button" class="submit-button" onclick="submitSliders()">Submit</button>
+            </div>
+        </div>
+
+        <div class="prompt-queue third-box"></div>
+        <div class="audio-list third-box"></div>   
+    </div>
+
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+</html>

@@ -14,7 +14,7 @@ class HijackedMusicGen(MusicGen):
     def _timed_progress_callback(self, generated_tokens: int, tokens_to_generate: int):
         current_time = time.time()
         if current_time - self._last_update_time >= 0.1:  # 0.1 seconds have passed
-            self.socketio.emit('progress', {'generated_tokens': generated_tokens, 'tokens_to_generate': tokens_to_generate})
+            self.socketio.emit('progress', {'progress': float(generated_tokens/tokens_to_generate)})
             self._last_update_time = current_time
         
     @staticmethod

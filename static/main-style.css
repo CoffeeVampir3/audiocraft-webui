@@ -40,27 +40,32 @@ body {
 }
 
 select {
-    background-color: var(--opossum);
     color: var(--jellyfish);
     font-size: 18px;
 }
 
 textarea {
-    background-color: var(--opossum);
     color: var(--cuttlefish);
+}
+
+.model-selector {
+    width:30%;
+    justify-self: center;
+    background-color: var(--kitten);
+}
+
+.group {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 20px;
+    padding: 20px;
 }
 
 .container {
     display: flex;
     justify-content: space-between;
     padding: 10px;
-    width: 100%;
-    height: 95%;
-}
-
-form {
-    flex-basis: 20%;
-    padding-left: 20px;
+    height: 95vh;
 }
 
 .third-box {
@@ -70,10 +75,71 @@ form {
     border-radius: 1em;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
     background-color: var(--kitten);
+    min-width: 33vw;
+    height: 95vh;
+    align-content: center;
+    display: grid;
 }
 
-.audio-padding {
-    height: 20px;
+.field {
+    margin-bottom: 2em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin:auto;
+    flex-basis: 0;
+    padding: 10px;
+    flex-grow: 1;
+}
+
+.slider-value {
+    max-width: 35px;
+    text-align: center;
+    border-radius: 50px;
+    border: 2px solid #ccc;
+    background-color: var(--jellyfish);
+}
+
+.field label {
+    display: block;
+    margin-bottom: 0.5em;
+    color: var(--light-text-color); 
+    font-size: 1.5em;
+    font-weight: 500;
+}
+
+.submit-container {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    width: 100%;
+    border: 0px;
+}
+
+#text {
+    background-color: var(--kitten); /* Light grey; replace with any color you like */
+    border-width: 1px;
+    border-color: var(--kangaroo);
+    border-radius: 4%;
+    padding: 4px;
+}
+
+.submit-button {
+    width: 20%;
+    align-self: center;
+    border-color: var(--kitten);
+    background-color: var(--jellyfish);
+    border-radius: 20%;
+}
+
+.submit-button:hover {
+    background-color: var(--platypus);
+}
+
+.submit-button:active {
+    background-color: var(--unicorn);
+    transform: scale(0.95);
 }
 
 .prompt-queue {
@@ -86,6 +152,38 @@ form {
     overflow-y: auto;
     overflow-x: hidden;
     max-height: 95vh;
+}
+
+.audio-item {
+    width:95%;
+    max-width: 95%;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid var(--hamster);
+    border-radius: 5px;
+    box-shadow: 0px 0px 5px var(--flamingo);
+    justify-content: space-between;
+    animation: fadeIn 1.8s;
+}
+
+.audio-item-params {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    justify-items: center; 
+    align-items: center;
+    width: 90%;
+    max-width: 90%;
+    margin: 0 auto;
+}
+
+.audio-item-text {
+    max-width: 90%;
+    overflow-wrap: break-word;
+    text-align: left;
 }
 
 .audio-list {
@@ -105,20 +203,6 @@ form {
     100% {opacity: 1;}
 }
 
-.audio-item {
-    width:95%;
-    max-width: 95%;
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-    padding: 10px;
-    border: 1px solid var(--hamster);
-    border-radius: 5px;
-    box-shadow: 0px 0px 5px var(--flamingo);
-    justify-content: space-between;
-    animation: fadeIn 1.8s;
-}
-
 .audio-list::-webkit-scrollbar {
     width: 10px;
 }
@@ -132,116 +216,10 @@ form {
     border-radius: 20px;
 }
 
-.audio-item-text {
-    max-width: 90%;
-    overflow-wrap: break-word;
-    text-align: left;
-}
-
-.field {
-    margin-bottom: 2em;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    margin:auto;
-    flex-basis: 0;
-    padding: 10px;
-    flex-grow: 1;
-}
-
-.field label {
-    display: block;
-    margin-bottom: 0.5em;
-    color: var(--light-text-color); 
-    font-size: 1.2em;
-    font-weight: 500;
-}
-
-.submit-container {
-    flex-grow: 1;
-    width: 100%;
-    border: 1px solid var(--lemur);
-    background-color: var(--badger);
-    border-radius: 10px;
-    padding: 10px;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.input-wrapper {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-
-.input-wrapper textarea {
-    resize: none;
-    margin-bottom: 10px;
-    border-radius: 12px;
-}
-
-.input-wrapper input[type="submit"] {
-    align-self: flex-end;
-    font-size: 1.2em;
-    font-weight: bold;
-}
-
-.submit-container input[type="text"] {
-    flex-grow: 1;
-    margin-right: 1em;
-    background-color: var(--opossum);
-    border: none;
-    border-radius: 0.25em;
-    color: var(--cuttlefish);
-    padding: 0.5em;
-    transition: all 0.3s ease;
-}
-
-.submit-container input[type="submit"] {
-    background-color: var(--flamingo);
-    color: var(--kitten);
-    border: none;
-    padding: 0.25em 1.5em; 
-    border-radius: 0.25em;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.submit-container input[type="submit"]:hover {
-    background-color: var(--platypus);
-}
-
-.submit-container input[type="submit"]:active {
-    background-color: var(--unicorn);
-    transform: scale(0.95);
-}
-
 .model-melody {
     display: flex;
     flex-wrap: nowrap;
     align-items: start;
-}
-
-.group {
-    display: flex;
-    justify-content: space-between;
-}
-
-.slider-group {
-    padding-bottom: 50px;
-    padding-top: 50px;
-}
-
-.slider-value {
-    background-color: var(--jellyfish);
-    width: 40px;
-    text-align: center;
-    border: 3px;
-    border-radius: 20px;
-}
-
-.group > div {
-    flex-basis: 50%;
 }
 
 @keyframes gradient {
@@ -254,5 +232,5 @@ form {
     background: linear-gradient(-83deg, var(--flamingo), var(--lizard), var(--meerkat));
     background-size: 400% 400%;
     animation: gradient 1.8s ease infinite;
-    color: white; /* Change text color so it's readable on the gradient */
+    color: white;
 }
