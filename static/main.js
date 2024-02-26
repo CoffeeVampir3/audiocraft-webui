@@ -154,12 +154,19 @@ function addAudiosToList(pairs, chronological = false) {
     Promise.allSettled(fetchPromises).then(results => {
         // Filter out any that were rejected
         const fulfilledResults = results.filter(result => result.status === 'fulfilled').map(result => result.value);
+        let reorderedResults = new Array(pairs.length);
+        results.forEach((result, index) => {
+            if (result.status === 'fulfilled') {
+                // Place the result directly into the position that matches the original 'pairs' array
+                reorderedResults[index] = result.value;
+            } else {
+                // For failed fetches, you might want to handle them differently
+                // For example, placing a placeholder or null to indicate a failed operation
+                reorderedResults[index] = null; // Adjust based on how you want to handle failures
+            }
+        });
 
-        // Now results are in the same order as 'pairs'
-        // If chronological order is requested, process them as is; otherwise, reverse the array
-        const orderedResults = chronological ? fulfilledResults : fulfilledResults.reverse();
-
-        orderedResults.forEach(({ json_data, filename }) => {
+        reorderedResults.forEach(({ json_data, filename }) => {
             makeAudioElement(json_data, filename, chronological)
         });
     });
@@ -176,7 +183,6 @@ socket.on('audio_json_pairs', function(data) {
     data.forEach(pair => {
         // Assuming 'pair' is an array with [wavFile, jsonFile]
         const [wavFile, jsonFile] = pair;
-        console.log(`Audio File: ${wavFile}, JSON File: ${jsonFile}`);
         
         addAudioToList(wavFile, jsonFile, true)
     });
