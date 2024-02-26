@@ -41,6 +41,11 @@ def write_audio(model_type, prompt, audio, audio_gen_params):
     audio_tensors = audio.detach().cpu().float()
     sample_rate = MODEL.sample_rate
     
+    max_length = 255
+    if len(absolute_path) > max_length:
+        base_filename = base_filename[:max_length - len(os.path.abspath(f"static/audio/")) - 15]
+        output_filename = f"{base_filename}.wav"
+    
     i = 1
     while os.path.exists(output_filename):
         output_filename = f"{base_filename}({i}).wav"

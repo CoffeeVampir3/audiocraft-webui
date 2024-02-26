@@ -35,11 +35,11 @@ def load_last_gen_settings():
         settings = json.load(infile)
         model = settings["model"]
         prompt = settings["prompt"]
-        topp = settings["parameters"]["top_p"]
-        duration = settings["parameters"]["duration"]
-        cfg_coef = settings["parameters"]["cfg_coef"]
-        topk = settings["parameters"]["top_k"]
-        temperature = settings["parameters"]["temperature"]
+        topp = float(settings["parameters"]["top_p"])
+        duration = int(settings["parameters"]["duration"])
+        cfg_coef = float(settings["parameters"]["cfg_coef"])
+        topk = int(settings["parameters"]["top_k"])
+        temperature = float(settings["parameters"]["temperature"])
         return model, prompt, topp, duration, cfg_coef, topk, temperature
     
     
@@ -66,7 +66,6 @@ def handle_submit_sliders(json):
 @socketio.on('connect')
 def handle_connect():
     audio_json_pairs = get_audio_json_pairs("static/audio")
-    # Send the list of pairs to the connected client
     socketio.emit('audio_json_pairs', audio_json_pairs)
     
 def get_audio_json_pairs(directory):
@@ -83,9 +82,7 @@ def get_audio_json_pairs(directory):
             full_json_path = os.path.join(directory, json_file)
             pairs.append((full_wav_path, full_json_path))
             
-    for pair in pairs:
-        print(pair)
-    
+    pairs.sort(key=lambda pair: os.path.getmtime(pair[0]), reverse=True)
     return pairs
     
 @app.route('/upload_melody', methods=['POST'])
@@ -109,7 +106,7 @@ def upload_audio():
 
 @app.route('/')
 def index():
-    model, prompt, topk, duration, cfg_coef, topp, temperature = load_last_gen_settings()
+    model, prompt, topp, duration, cfg_coef, topk, temperature = load_last_gen_settings()
     if model is not None:
         return render_template('index.html', 
                                topk=topk, 
