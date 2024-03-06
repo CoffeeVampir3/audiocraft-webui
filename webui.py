@@ -106,16 +106,20 @@ def upload_audio():
 
 @app.route('/')
 def index():
-    model, prompt, topp, duration, cfg_coef, topk, temperature = load_last_gen_settings()
-    if model is not None:
-        return render_template('index.html', 
-                               topk=topk, 
-                               duration=duration, 
-                               cfg_coef=cfg_coef, 
-                               topp=topp, 
-                               temperature=temperature, 
-                               default_model=model,
-                               default_text=prompt)
+    try:
+        model, prompt, topp, duration, cfg_coef, topk, temperature = load_last_gen_settings()
+        if model is not None:
+            return render_template('index.html', 
+                                topk=topk, 
+                                duration=duration, 
+                                cfg_coef=cfg_coef, 
+                                topp=topp, 
+                                temperature=temperature, 
+                                default_model=model,
+                                default_text=prompt)
+    except:
+        pass
+    
     topk = 250
     duration = 30
     cfg_coef = 4.0

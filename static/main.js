@@ -176,8 +176,6 @@ function addAudiosToList(pairs, chronological = false) {
 
 // Listen for the 'audio_json_pairs' event
 socket.on('audio_json_pairs', function(data) {
-    console.log('Received audio and JSON pairs:', data);
-    
     // Process the received pairs here
     // For example, display them on the webpage or perform other actions
     data.forEach(pair => {
