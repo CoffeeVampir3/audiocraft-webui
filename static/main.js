@@ -67,7 +67,7 @@ socket.on('on_finish_audio', function(data) {
     addAudioToList(data.filename, data.json_filename);
 });
 
-function makeAudioElement(json_data, filename, chronological) {
+function makeAudioElement(json_data, filename, use_reverse_ordering) {
     const audioListDiv = document.querySelector('.audio-list');
 
     const audioItemDiv = document.createElement('div');
@@ -104,7 +104,9 @@ function makeAudioElement(json_data, filename, chronological) {
     audioItemDiv.appendChild(audio);
     audioItemDiv.appendChild(parametersDiv);
 
-    if(chronological) {
+    console.log(use_reverse_ordering)
+
+    if(use_reverse_ordering) {
         audioListDiv.appendChild(audioItemDiv);
         return
     }
@@ -112,15 +114,14 @@ function makeAudioElement(json_data, filename, chronological) {
     if (audioListDiv.firstChild) {
         audioListDiv.insertBefore(audioItemDiv, audioListDiv.firstChild);
     } else {
-        // If .audio-list has no children yet, appendChild works the same as insertBefore
         audioListDiv.appendChild(audioItemDiv);
     }
 }
 
-function addAudioToList(filename, json_filename, chronological=False) {
+function addAudioToList(filename, json_filename) {
     fetch(json_filename)
     .then(response => response.json())
-    .then(json_data => makeAudioElement(json_data, filename, chronological))
+    .then(json_data => makeAudioElement(json_data, filename, false))
 }
 
 // PROGRESS
@@ -139,49 +140,40 @@ socket.on('progress', function(data) {
     }
 });
 
-function addAudiosToList(pairs, chronological = false) {
+function addAudiosToList(pairs) {
     // Use map to transform each pair into a fetch promise
     const fetchPromises = pairs.map(pair => {
         const [filename, json_filename] = pair;
-        // Return both the fetch promise and the filenames to maintain the association
         return fetch(json_filename)
-            .then(response => response.json())
-            .then(json_data => ({ json_data, filename }))
-            .catch(error => console.error(`Failed to fetch ${json_filename}:`, error));
+            .then(response => {
+                const lastModified = response.headers.get("Last-Modified");
+                const lastModifiedDate = new Date(lastModified);
+                return response.json().then(json_data => {
+                    return { json_data, filename, lastModifiedDate };
+                });
+            });
     });
 
-    // Wait for all fetches to complete
-    Promise.allSettled(fetchPromises).then(results => {
-        // Filter out any that were rejected
-        const fulfilledResults = results.filter(result => result.status === 'fulfilled').map(result => result.value);
-        let reorderedResults = new Array(pairs.length);
-        results.forEach((result, index) => {
-            if (result.status === 'fulfilled') {
-                // Place the result directly into the position that matches the original 'pairs' array
-                reorderedResults[index] = result.value;
-            } else {
-                // For failed fetches, you might want to handle them differently
-                // For example, placing a placeholder or null to indicate a failed operation
-                reorderedResults[index] = null; // Adjust based on how you want to handle failures
-            }
+    const audioListDiv = document.querySelector('.audio-list');
+    while (audioListDiv.firstChild) {
+        audioListDiv.removeChild(audioListDiv.firstChild);
+    }  
+    
+    Promise.all(fetchPromises)
+    .then(results => {
+        const sortedResults = results.sort((a, b) => b.lastModifiedDate - a.lastModifiedDate);
+        
+        sortedResults.forEach(item => {
+            makeAudioElement(item.json_data, item.filename, true);
         });
-
-        reorderedResults.forEach(({ json_data, filename }) => {
-            makeAudioElement(json_data, filename, chronological)
-        });
+    })
+    .catch(error => {
+        console.error("Error fetching data:", error);
     });
 }
 
 // INITIALIZE
 
-// Listen for the 'audio_json_pairs' event
 socket.on('audio_json_pairs', function(data) {
-    // Process the received pairs here
-    // For example, display them on the webpage or perform other actions
-    data.forEach(pair => {
-        // Assuming 'pair' is an array with [wavFile, jsonFile]
-        const [wavFile, jsonFile] = pair;
-        
-        addAudioToList(wavFile, jsonFile, true)
-    });
+    addAudiosToList(data)
 });
